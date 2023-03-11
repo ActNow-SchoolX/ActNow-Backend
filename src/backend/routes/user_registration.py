@@ -1,9 +1,9 @@
-from fastapi import FastAPI, UploadFile
-from users import User, get_password_hash
-from starlette.responses import JSONResponse
+from fastapi import UploadFile, APIRouter
+from src.backend.internals.users import User, get_password_hash
 import json
 
-app = FastAPI()
+app = APIRouter()
+
 
 @app.post('/users')
 def post_user(item: User):
