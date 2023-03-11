@@ -25,7 +25,7 @@ class User(BaseModel):
     profile_description: str | None = None
 
     @validator("nickname")
-    def validate_name(self, value):   # Пройдет валидацию при наличии только лишь букв и цифр в нике, а также по длинам.
+    def validate_name(cls, value):   # Пройдет валидацию при наличии только лишь букв и цифр в нике, а также по длинам.
 
         if ((not NICKNAME_PATTERN.search(value))    # Сопоставляю с регулярным выражением
             or (len(value) > 20) 
@@ -39,7 +39,7 @@ class User(BaseModel):
         return value
     
     @validator("password")
-    def validate_password(self, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и по длинам.
+    def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и по длинам.
 
         if ((not PASSWORD_PATTERN.search(value))    # Сопоставляю с регулярным выражением
             or (len(value) > 20)
@@ -56,7 +56,7 @@ class User(BaseModel):
         return value
     
     @validator("profile_description")
-    def validate_desc(self, value):   # Пройдет валидацию только по длине.
+    def validate_desc(cls, value):   # Пройдет валидацию только по длине.
 
         if len(value) > 127:
 

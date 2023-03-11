@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import Request, HTTPException, APIRouter
 from pydantic import BaseModel
 # from fastapi.responses import JSONResponse
 
-app = FastAPI()
+app = APIRouter()
 
 
 class Nicknames(BaseModel):
