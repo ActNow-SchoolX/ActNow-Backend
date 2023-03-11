@@ -16,8 +16,8 @@ nicknames = ['bob', 'aboba', 'somebody', 'biba', "user"]
 def validate_nickname(value, nicknames):
     for elem in nicknames:
         if elem == value:
-            return True
-    return False
+            return False
+    return True
 
 
 @app.post("/validate_nickname")
