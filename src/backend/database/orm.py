@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship, select, Session
-from typing import Optional, List
+from typing import List
 from datetime import datetime
 
 __all__ = [
@@ -17,8 +17,8 @@ class UserStoryLikes(SQLModel, table=True):
     :param user_id: user id
     :param story_id: story id
     """
-    user_id: Optional[int] = Field(foreign_key="user.id", primary_key=True)
-    story_id: Optional[int] = Field(foreign_key="story.id", primary_key=True)
+    user_id: int | None = Field(foreign_key="user.id", primary_key=True)
+    story_id: int | None = Field(foreign_key="story.id", primary_key=True)
 
 
 # class user with id, nickname, password and relationship for UserMetadata
@@ -32,7 +32,7 @@ class User(SQLModel, table=True):
     :param stories: user stories
     :param user_metadata: user metadata
     """
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     nickname: str
     password: str
     goals: List["Goal"] = Relationship(back_populates="user")
@@ -41,7 +41,7 @@ class User(SQLModel, table=True):
     user_metadata: "UserMetadata" = Relationship(back_populates="user")
 
     @classmethod
-    def get_by_nickname(cls, session: Session, nickname: str) -> Optional["User"]:
+    def get_by_nickname(cls, session: Session, nickname: str) -> "User" | None:
         """Get user by nickname
 
         :param session: session
@@ -51,7 +51,7 @@ class User(SQLModel, table=True):
         return session.exec(select(cls).where(cls.nickname == nickname)).first()
 
     @classmethod
-    def get_by_id(cls, session: Session, _id: int) -> Optional["User"]:
+    def get_by_id(cls, session: Session, _id: int) -> "User" | None:
         """Get user by id
 
         :param session: session
@@ -115,7 +115,7 @@ class UserMetadata(SQLModel, table=True):
     user: "User" = Relationship(back_populates="user_metadata")
 
     @classmethod
-    def get_by_user_id(cls, session: Session, user_id: int) -> Optional["UserMetadata"]:
+    def get_by_user_id(cls, session: Session, user_id: int) -> "UserMetadata" | None:
         """Get user metadata by user id
 
         :param session: session
@@ -170,15 +170,15 @@ class Goal(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     title: str
     description: str
-    price: Optional[float] = Field(default=0.)
-    deadline: Optional[datetime] = Field(default=None)
+    price: float | None = Field(default=0.)
+    deadline: datetime | None = Field(default=None)
     date_create: datetime = Field(default_factory=datetime.now)
     user_id: int = Field(foreign_key="user.id")
     user: 'User' = Relationship(back_populates="goals")
     stories: List["Story"] = Relationship(back_populates="goal")
 
     @classmethod
-    def get_by_id(cls, session: Session, _id: int) -> Optional["Goal"]:
+    def get_by_id(cls, session: Session, _id: int) -> "Goal" | None:
         """Get goal by id
 
         :param session: session
@@ -259,7 +259,7 @@ class Story(SQLModel, table=True):
     deleted: bool = Field(default=False)
 
     @classmethod
-    def get_by_id(cls, session: Session, _id: int) -> Optional["Story"]:
+    def get_by_id(cls, session: Session, _id: int) -> "Story" | None:
         """Get story by id
 
         :param session: session
