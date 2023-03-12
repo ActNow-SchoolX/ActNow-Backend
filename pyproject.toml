@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "actnow-backend"
+version = "0.1.0"
+description = "ActNow Backend part of product"
+authors = [
+    "Nikita Davidchuk <bizy18588@gmail.com>",
+    "Ilya Bondarev <evilmen43217890@gmail.com>",
+    "Sergey Kaluyzhnuy <Deusagile@gmail.com>",
+    "Vladislava Galimova <v.galimova.sas@gmail.com>",
+    "Kistaman Abakarova <kabakarova23@gmail.com>",
+    "Eugene Osipov <dedaireks@gmail.com>"
+]
+license = "GNU GPL 3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.94.0"
+fastapi-sessions = "^0.3.2"
+sqlmodel = "^0.0.8"
+passlib = "^1.7.4"
+python-dotenv = "^1.0.0"
+uvicorn = "^0.21.0"
+python-multipart = "^0.0.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
