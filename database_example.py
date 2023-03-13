@@ -5,7 +5,7 @@ from src.backend.database.orm import (
     Story
 )
 
-from sqlmodel import Session, SQLModel
+from sqlmodel import Session, create_engine, SQLModel
 from src.backend.database import engine
 
 SQLModel.metadata.create_all(engine)
