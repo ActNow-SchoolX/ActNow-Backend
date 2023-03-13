@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Response
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
 from fastapi.exceptions import HTTPException
 from sqlmodel import Session
-from pydantic import Field, BaseModel
+from pydantic import BaseModel
 
 from src.backend.sessions import SessionData
 from src.backend.dependencies import cookie, backend, verifier
