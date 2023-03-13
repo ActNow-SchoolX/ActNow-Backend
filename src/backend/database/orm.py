@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship, select, Session
-from typing import List
+from typing import List, TypeVar
 from datetime import datetime
 
 __all__ = [
@@ -9,6 +9,11 @@ __all__ = [
     "Story",
     "UserStoryLikes",
 ]
+
+U = TypeVar("U", bound="User")
+UM = TypeVar("UM", bound="UserMetadata")
+G = TypeVar("G", bound="Goal")
+S = TypeVar("S", bound="Story")
 
 
 class UserStoryLikes(SQLModel, table=True):
@@ -41,7 +46,7 @@ class User(SQLModel, table=True):
     user_metadata: "UserMetadata" = Relationship(back_populates="user")
 
     @classmethod
-    def get_by_nickname(cls, session: Session, nickname: str) -> "User" | None:
+    def get_by_nickname(cls: type[U], session: Session, nickname: str) -> U | None:
         """Get user by nickname
 
         :param session: session
@@ -51,7 +56,7 @@ class User(SQLModel, table=True):
         return session.exec(select(cls).where(cls.nickname == nickname)).first()
 
     @classmethod
-    def get_by_id(cls, session: Session, _id: int) -> "User" | None:
+    def get_by_id(cls: type[U], session: Session, _id: int) -> U | None:
         """Get user by id
 
         :param session: session
@@ -61,7 +66,7 @@ class User(SQLModel, table=True):
         return session.get(cls, _id)
 
     @classmethod
-    def get_all(cls, session: Session, limit: int = 100, offset: int = 0) -> List["User"]:
+    def get_all(cls: type[U], session: Session, limit: int = 100, offset: int = 0) -> List[U]:
         """Get all users
 
         :param session: session
@@ -71,7 +76,7 @@ class User(SQLModel, table=True):
         """
         return session.exec(select(cls).offset(offset).limit(limit)).all()
 
-    def create(self, session: Session) -> "User":
+    def create(self, session: Session) -> U:
         """Create user
 
         :param session: session
@@ -82,7 +87,7 @@ class User(SQLModel, table=True):
         session.refresh(self)
         return self
 
-    def update(self, session: Session) -> "User":
+    def update(self, session: Session) -> U:
         """Update user
 
         :param session: session
@@ -115,7 +120,7 @@ class UserMetadata(SQLModel, table=True):
     user: "User" = Relationship(back_populates="user_metadata")
 
     @classmethod
-    def get_by_user_id(cls, session: Session, user_id: int) -> "UserMetadata" | None:
+    def get_by_user_id(cls: type[UM], session: Session, user_id: int) -> UM | None:
         """Get user metadata by user id
 
         :param session: session
@@ -125,7 +130,7 @@ class UserMetadata(SQLModel, table=True):
         return session.exec(select(cls).where(cls.user_id == user_id)).first()
 
     @classmethod
-    def create(cls, session: Session, user_id: int, description: str, photo: str) -> "UserMetadata":
+    def create(cls: type[UM], session: Session, user_id: int, description: str, photo: str) -> UM:
         """Create user metadata
 
         :param session: session
@@ -140,7 +145,7 @@ class UserMetadata(SQLModel, table=True):
         session.refresh(user_metadata)
         return user_metadata
 
-    def update(self, session: Session) -> "UserMetadata":
+    def update(self, session: Session) -> UM:
         """Update user metadata
 
         :param session: session
@@ -178,7 +183,7 @@ class Goal(SQLModel, table=True):
     stories: List["Story"] = Relationship(back_populates="goal")
 
     @classmethod
-    def get_by_id(cls, session: Session, _id: int) -> "Goal" | None:
+    def get_by_id(cls: type[G], session: Session, _id: int) -> G | None:
         """Get goal by id
 
         :param session: session
@@ -188,7 +193,7 @@ class Goal(SQLModel, table=True):
         return session.get(cls, _id)
 
     @classmethod
-    def get_all(cls, session: Session, limit: int = 100, offset: int = 0) -> List["Goal"]:
+    def get_all(cls: type[G], session: Session, limit: int = 100, offset: int = 0) -> List[G]:
         """Get all goals
 
         :param session: session
@@ -199,7 +204,7 @@ class Goal(SQLModel, table=True):
         return session.exec(select(cls).offset(offset).limit(limit)).all()
 
     @classmethod
-    def get_by_user_id(cls, session: Session, user_id: int, limit: int = 100, offset: int = 0) -> List["Goal"]:
+    def get_by_user_id(cls: type[G], session: Session, user_id: int, limit: int = 100, offset: int = 0) -> List[G]:
         """Get goals by user id
 
         :param session: session
@@ -210,7 +215,7 @@ class Goal(SQLModel, table=True):
         """
         return session.exec(select(cls).where(cls.user_id == user_id).offset(offset).limit(limit)).all()
 
-    def create(self, session: Session) -> "Goal":
+    def create(self, session: Session) -> G:
         """Create goal
 
         :param session: session
@@ -221,7 +226,7 @@ class Goal(SQLModel, table=True):
         session.refresh(self)
         return self
 
-    def update(self, session: Session) -> "Goal":
+    def update(self, session: Session) -> G:
         """Update goal
 
         :param session: session
@@ -259,7 +264,7 @@ class Story(SQLModel, table=True):
     deleted: bool = Field(default=False)
 
     @classmethod
-    def get_by_id(cls, session: Session, _id: int) -> "Story" | None:
+    def get_by_id(cls: type[S], session: Session, _id: int) -> S | None:
         """Get story by id
 
         :param session: session
@@ -269,7 +274,7 @@ class Story(SQLModel, table=True):
         return session.get(cls, _id)
 
     @classmethod
-    def get_all(cls, session: Session, limit: int = 100, offset: int = 0) -> List["Story"]:
+    def get_all(cls: type[S], session: Session, limit: int = 100, offset: int = 0) -> List[S]:
         """Get all stories
 
         :param session: session
@@ -280,7 +285,7 @@ class Story(SQLModel, table=True):
         return session.exec(select(cls).offset(offset).limit(limit)).all()
 
     @classmethod
-    def get_by_user_id(cls, session: Session, user_id: int, limit: int = 100, offset: int = 0) -> List["Story"]:
+    def get_by_user_id(cls: type[S], session: Session, user_id: int, limit: int = 100, offset: int = 0) -> List[S]:
         """Get stories by user id
 
         :param session: session
@@ -292,7 +297,7 @@ class Story(SQLModel, table=True):
         return session.exec(select(cls).where(cls.user_id == user_id).offset(offset).limit(limit)).all()
 
     @classmethod
-    def get_by_goal_id(cls, session: Session, goal_id: int, limit: int = 100, offset: int = 0) -> List["Story"]:
+    def get_by_goal_id(cls: type[S], session: Session, goal_id: int, limit: int = 100, offset: int = 0) -> List[S]:
         """Get stories by goal id
 
         :param session: session
@@ -303,7 +308,7 @@ class Story(SQLModel, table=True):
         """
         return session.exec(select(cls).where(cls.goal_id == goal_id).offset(offset).limit(limit)).all()
 
-    def create(self, session: Session) -> "Story":
+    def create(self, session: Session) -> S:
         """Create story
 
         :param session: session
@@ -314,7 +319,7 @@ class Story(SQLModel, table=True):
         session.refresh(self)
         return self
 
-    def update(self, session: Session) -> "Story":
+    def update(self, session: Session) -> S:
         """Update story
 
         :param session: session
@@ -325,7 +330,7 @@ class Story(SQLModel, table=True):
         session.refresh(self)
         return self
 
-    def delete(self, session: Session) -> "Story":
+    def delete(self, session: Session) -> S:
         """Delete story
 
         :param session: session
