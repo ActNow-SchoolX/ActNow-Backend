@@ -182,8 +182,6 @@ class BasicVerifier(SessionVerifier[UUID, SessionData]):
 
         # check if session is expired
         if model.expires_in <= datetime.now().timestamp():
-            # delete if expired
-            self._backend.delete(model.uuid)
             return False
 
         return True
