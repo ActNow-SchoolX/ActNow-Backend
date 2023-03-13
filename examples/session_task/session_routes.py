@@ -16,6 +16,12 @@ app_security = HTTPBasic()
 User.metadata.create_all(engine)
 
 
+class UserRequest(BaseModel):
+    nickname: str
+    password: str
+    photo: str
+
+
 class UserResponse(BaseModel):
     id: int
     nickname: str
@@ -42,6 +48,20 @@ def register_fake_user() -> User:
         session.add(user_metadata)
         session.commit()
         session.refresh(user_metadata)
+
+        return user
+
+
+def register_new_user(nickname, password, photo) -> User:
+    with Session(engine) as session:
+        user = User(
+            nickname=nickname,
+            password=password
+        )
+
+        session.add(user)
+        session.commit()
+        session.refresh(user)
 
         return user
 
@@ -105,3 +125,11 @@ async def logout(response: Response, session_uuid: SessionData = Depends(cookie)
     cookie.delete_from_response(response)
 
     return {"success": True, "message": "Logged out successfully!"}
+
+
+@app.post('/register')
+def register(user: UserRequest):
+    new_user = register_new_user(user.nickname, user.password, user.photo)
+
+    return UserResponse(nickname=new_user.nickname, id=new_user.id)
+
