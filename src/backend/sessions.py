@@ -179,10 +179,6 @@ class BasicVerifier(SessionVerifier[UUID, SessionData]):
         Returns:
             bool: True if session is valid, False otherwise.
         """
-        # check if session is existing in the database
-        if self._backend.read(model.uuid) is None:
-            return False
-
         # check if session is expired
         if model.expires_in <= datetime.now().timestamp():
             return False
