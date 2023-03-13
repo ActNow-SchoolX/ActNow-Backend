@@ -4,9 +4,12 @@ from fastapi_sessions.session_verifier import SessionVerifier, SessionBackend
 from pydantic import validator
 from sqlmodel import SQLModel, Session, Field
 from uuid import UUID, uuid4
+from os import environ
 
 
-def get_expiration(delta: timedelta = timedelta(minutes=5)) -> float:
+def get_expiration(
+        delta: timedelta = timedelta(minutes=int(environ.get('SESSION_MINUTES_TO_LIVE')))
+) -> float:
     """Get expiration time in seconds from now.
 
     Args:
