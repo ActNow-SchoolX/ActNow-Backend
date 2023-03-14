@@ -1,6 +1,11 @@
 from datetime import datetime, timedelta
-from fastapi import HTTPException
+from typing import Union
+
+from fastapi import HTTPException, Request
+from fastapi_sessions.frontends.implementations import SessionCookie
+from fastapi_sessions.frontends.session_frontend import FrontendError, ID
 from fastapi_sessions.session_verifier import SessionVerifier, SessionBackend
+from itsdangerous import BadSignature, SignatureExpired
 from pydantic import validator
 from sqlmodel import SQLModel, Session, Field
 from uuid import UUID, uuid4
@@ -19,6 +24,33 @@ def get_expiration(
         float: Expiration time in seconds from now.
     """
     return (datetime.now() + delta).timestamp()
+
+
+class FastSessionCookie(SessionCookie):
+    def get_last_cookie(self, request: Request) -> Union[UUID, FrontendError]:
+        signed_session_id = request.cookies.get(self.model.name)
+
+        if not signed_session_id:
+            error = FrontendError("No session cookie attached to request")
+            super().attach_id_state(request, error)
+            return error
+
+        # Verify and timestamp the signed session id
+        try:
+            session_id = UUID(
+                self.signer.loads(
+                    signed_session_id,
+                    max_age=self.cookie_params.max_age,
+                    return_timestamp=False,
+                )
+            )
+        except (SignatureExpired, BadSignature):
+            error = FrontendError("Session cookie has invalid signature")
+            super().attach_id_state(request, error)
+            return error
+
+        super().attach_id_state(request, session_id)
+        return session_id
 
 
 class SessionData(SQLModel, table=True):
@@ -129,7 +161,7 @@ class SQLBackend(SessionBackend):
             session.commit()
 
 
-class BasicVerifier(SessionVerifier[UUID, SessionData]):
+class FastSessionVerifier(SessionVerifier[UUID, SessionData]):
     def __init__(
         self,
         *,
@@ -147,7 +179,7 @@ class BasicVerifier(SessionVerifier[UUID, SessionData]):
             auth_http_exception (HTTPException): Auth HTTP exception.
 
         Returns:
-            BasicVerifier: Basic session verifier.
+            FastSessionVerifier: Basic session verifier.
         """
         self._identifier = identifier
         self._auto_error = auto_error
@@ -169,6 +201,25 @@ class BasicVerifier(SessionVerifier[UUID, SessionData]):
     @property
     def auth_http_exception(self):
         return self._auth_http_exception
+
+    async def get_last_session(self, request: Request):
+        try:
+            session_id: Union[ID, FrontendError] = request.state.session_ids[
+                self.identifier
+            ]
+        except Exception:
+            return None
+
+        if isinstance(session_id, FrontendError):
+            return None
+
+        session_data = await self.backend.read(session_id)
+        if not session_data or not self.verify_session(session_data):
+            if self.auto_error:
+                raise self.auth_http_exception
+            return None
+
+        return session_data
 
     def verify_session(self, model: SessionData) -> bool:
         """Verify session.
