@@ -76,6 +76,17 @@ class User(SQLModel, table=True):
         """
         return session.exec(select(cls).offset(offset).limit(limit)).all()
 
+    @classmethod
+    def like_story(cls: type[U], session: Session, user_id: int, story_id: int) -> None:
+        """Like story
+
+        :param session: session
+        :param user_id: user id
+        :param story_id: story id
+        """
+        session.add(UserStoryLikes(user_id=user_id, story_id=story_id))
+        session.commit()
+
     def create(self, session: Session) -> U:
         """Create user
 
@@ -307,6 +318,24 @@ class Story(SQLModel, table=True):
         :return: stories
         """
         return session.exec(select(cls).where(cls.goal_id == goal_id).offset(offset).limit(limit)).all()
+
+    @classmethod
+    def add_user_like(cls: type[S], session: Session, story_id: int, user_id: int) -> S | None:
+        """Add user like
+
+        :param session: session
+        :param story_id: story id
+        :param user_id: user id
+        :return: story
+        """
+        story = cls.get_by_id(session, story_id)
+        if story:
+            story.liked_users.append(User.get_by_id(session, user_id))
+            session.add(story)
+            session.commit()
+            session.refresh(story)
+            return story
+        return None
 
     def create(self, session: Session) -> S:
         """Create story
