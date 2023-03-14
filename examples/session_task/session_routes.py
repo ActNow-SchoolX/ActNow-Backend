@@ -1,11 +1,6 @@
-from typing import Union
-from uuid import UUID
-
-from fastapi import FastAPI, Depends, Request, Response
+from fastapi import FastAPI, Depends, Response
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
 from fastapi.exceptions import HTTPException
-from fastapi_sessions.frontends.session_frontend import ID, FrontendError
-from itsdangerous import SignatureExpired, BadSignature
 from sqlmodel import Session
 from pydantic import BaseModel
 
@@ -30,7 +25,6 @@ class UserRequest(BaseModel):
 class UserResponse(BaseModel):
     id: int
     nickname: str
-    metadata: UserMetadata
 
 
 def register_fake_user() -> User:
@@ -82,114 +76,32 @@ def verify_credentials(nickname: str, password: str) -> User | HTTPException:
     return user
 
 
-def get_session_id(request: Request, some_var: str = 'var') -> Union[UUID, FrontendError, BadSignature]:
-        signed_session_id = request.cookies.get(cookie.model.name)
-
-        if not signed_session_id:
-            error = FrontendError("No session cookie attached to request")
-            cookie.attach_id_state(request, error)
-            return error
-
-        # Verify and timestamp the signed session id
-        try:
-            session_id = UUID(
-                cookie.signer.loads(
-                    signed_session_id,
-                    max_age=cookie.cookie_params.max_age,
-                    return_timestamp=False,
-                )
-            )
-        except (SignatureExpired, BadSignature):
-            error = BadSignature("Session cookie has invalid signature")
-            cookie.attach_id_state(request, error)
-            return error
-
-        cookie.attach_id_state(request, session_id)
-        return session_id
-
-
-async def get_current_session(request: Request):
-    try:
-        session_id: Union[ID, FrontendError, BadSignature] = request.state.session_ids[
-            verifier.identifier
-        ]
-    except Exception:
-        return None
-
-    if isinstance(session_id, FrontendError):
-        return None
-
-    if isinstance(session_id, BadSignature):
-        if verifier.auto_error:
-            raise session_id
-
-    session_data = await verifier.backend.read(session_id)
-    if not session_data or not verifier.verify_session(session_data):
-        if verifier.auto_error:
-            raise verifier.auth_http_exception
-        return None
-
-    return session_data
-
-
-@app.post('/login', dependencies=[Depends(get_session_id)])
+@app.post("/login", dependencies=[Depends(cookie.get_last_cookie)])
 async def login(
         response: Response,
         credentials: HTTPBasicCredentials = Depends(app_security),
-        old_session=Depends(get_current_session)
-) -> dict:
-    register_fake_user()
+        old_session: SessionData | None = Depends(verifier.get_last_session),
+):
+    if old_session is not None:
+        return {"message": "Already logged in"}
 
     user = verify_credentials(credentials.username, credentials.password)
 
     if isinstance(user, HTTPException):
         raise user
 
-    print(old_session)
-    if old_session is not None:
-        return {"success": False, "message": "Already logged in!"}
+    session = SessionData(user_id=user.id, nickname=user.nickname)
 
-    # create session
-    session_data = SessionData(
-        user_id=user.id,
-        nickname=user.nickname
-    )
+    await backend.create(session.uuid, session)
 
-    await backend.create(session_data.uuid, session_data)
-    cookie.attach_to_response(response, session_data.uuid)
+    cookie.attach_to_response(response, session.uuid)
 
-    return {"success": True, "message": "Logged in successfully!"}
+    return {"message": "Logged in"}
 
 
-@app.get('/user',
-         dependencies=[Depends(cookie)],
-         response_model=UserResponse
-         )
-async def get_user(session_data: SessionData = Depends(verifier)):
-    # get user from database
-    with Session(engine) as session:
-        user = User.get_by_id(session, session_data.user_id)
+@app.get("/me", dependencies=[Depends(cookie)], response_model=UserResponse)
+async def me(session: SessionData = Depends(verifier)):
+    with Session(engine) as ass:
+        user = User.get_by_id(ass, _id=session.user_id)
 
-        print(user.user_metadata)
-
-        return UserResponse(
-            id=user.id,
-            nickname=user.nickname,
-            metadata=user.user_metadata[0]
-        )
-
-
-@app.post('/logout')
-async def logout(response: Response, session_uuid: SessionData = Depends(cookie)) -> dict:
-    await backend.delete(session_uuid)
-    cookie.delete_from_response(response)
-
-    return {"success": True, "message": "Logged out successfully!"}
-
-
-@app.post('/register')
-def register(user: UserRequest):
-    new_user = register_new_user(user.nickname, user.password, user.photo)
-
-    return UserResponse(nickname=new_user.nickname, id=new_user.id)
-
+        return user
