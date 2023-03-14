@@ -1,6 +1,11 @@
-from fastapi import FastAPI, Depends, Response
+from typing import Union
+from uuid import UUID
+
+from fastapi import FastAPI, Depends, Request, Response
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
 from fastapi.exceptions import HTTPException
+from fastapi_sessions.frontends.session_frontend import ID, FrontendError
+from itsdangerous import SignatureExpired, BadSignature
 from sqlmodel import Session
 from pydantic import BaseModel
 
@@ -77,10 +82,61 @@ def verify_credentials(nickname: str, password: str) -> User | HTTPException:
     return user
 
 
-@app.post('/login')
+def get_session_id(request: Request, some_var: str = 'var') -> Union[UUID, FrontendError, BadSignature]:
+        signed_session_id = request.cookies.get(cookie.model.name)
+
+        if not signed_session_id:
+            error = FrontendError("No session cookie attached to request")
+            cookie.attach_id_state(request, error)
+            return error
+
+        # Verify and timestamp the signed session id
+        try:
+            session_id = UUID(
+                cookie.signer.loads(
+                    signed_session_id,
+                    max_age=cookie.cookie_params.max_age,
+                    return_timestamp=False,
+                )
+            )
+        except (SignatureExpired, BadSignature):
+            error = BadSignature("Session cookie has invalid signature")
+            cookie.attach_id_state(request, error)
+            return error
+
+        cookie.attach_id_state(request, session_id)
+        return session_id
+
+
+async def get_current_session(request: Request):
+    try:
+        session_id: Union[ID, FrontendError, BadSignature] = request.state.session_ids[
+            verifier.identifier
+        ]
+    except Exception:
+        return None
+
+    if isinstance(session_id, FrontendError):
+        return None
+
+    if isinstance(session_id, BadSignature):
+        if verifier.auto_error:
+            raise session_id
+
+    session_data = await verifier.backend.read(session_id)
+    if not session_data or not verifier.verify_session(session_data):
+        if verifier.auto_error:
+            raise verifier.auth_http_exception
+        return None
+
+    return session_data
+
+
+@app.post('/login', dependencies=[Depends(get_session_id)])
 async def login(
         response: Response,
-        credentials: HTTPBasicCredentials = Depends(app_security)
+        credentials: HTTPBasicCredentials = Depends(app_security),
+        old_session=Depends(get_current_session)
 ) -> dict:
     register_fake_user()
 
@@ -88,6 +144,10 @@ async def login(
 
     if isinstance(user, HTTPException):
         raise user
+
+    print(old_session)
+    if old_session is not None:
+        return {"success": False, "message": "Already logged in!"}
 
     # create session
     session_data = SessionData(
