@@ -25,7 +25,6 @@ class UserRequest(BaseModel):
 class UserResponse(BaseModel):
     id: int
     nickname: str
-    metadata: UserMetadata
 
 
 def register_fake_user() -> User:
@@ -77,59 +76,32 @@ def verify_credentials(nickname: str, password: str) -> User | HTTPException:
     return user
 
 
-@app.post('/login')
+@app.post("/login", dependencies=[Depends(cookie.get_last_cookie)])
 async def login(
         response: Response,
-        credentials: HTTPBasicCredentials = Depends(app_security)
-) -> dict:
-    register_fake_user()
+        credentials: HTTPBasicCredentials = Depends(app_security),
+        old_session: SessionData | None = Depends(verifier.get_last_session),
+):
+    if old_session is not None:
+        return {"message": "Already logged in"}
 
     user = verify_credentials(credentials.username, credentials.password)
 
     if isinstance(user, HTTPException):
         raise user
 
-    # create session
-    session_data = SessionData(
-        user_id=user.id,
-        nickname=user.nickname
-    )
+    session = SessionData(user_id=user.id, nickname=user.nickname)
 
-    await backend.create(session_data.uuid, session_data)
-    cookie.attach_to_response(response, session_data.uuid)
+    await backend.create(session.uuid, session)
 
-    return {"success": True, "message": "Logged in successfully!"}
+    cookie.attach_to_response(response, session.uuid)
+
+    return {"message": "Logged in"}
 
 
-@app.get('/user',
-         dependencies=[Depends(cookie)],
-         response_model=UserResponse
-         )
-async def get_user(session_data: SessionData = Depends(verifier)):
-    # get user from database
-    with Session(engine) as session:
-        user = User.get_by_id(session, session_data.user_id)
+@app.get("/me", dependencies=[Depends(cookie)], response_model=UserResponse)
+async def me(session: SessionData = Depends(verifier)):
+    with Session(engine) as ass:
+        user = User.get_by_id(ass, _id=session.user_id)
 
-        print(user.user_metadata)
-
-        return UserResponse(
-            id=user.id,
-            nickname=user.nickname,
-            metadata=user.user_metadata[0]
-        )
-
-
-@app.post('/logout')
-async def logout(response: Response, session_uuid: SessionData = Depends(cookie)) -> dict:
-    await backend.delete(session_uuid)
-    cookie.delete_from_response(response)
-
-    return {"success": True, "message": "Logged out successfully!"}
-
-
-@app.post('/register')
-def register(user: UserRequest):
-    new_user = register_new_user(user.nickname, user.password, user.photo)
-
-    return UserResponse(nickname=new_user.nickname, id=new_user.id)
-
+        return user
