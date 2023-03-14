@@ -140,21 +140,16 @@ class UserMetadata(SQLModel, table=True):
         """
         return session.exec(select(cls).where(cls.user_id == user_id)).first()
 
-    @classmethod
-    def create(cls: type[UM], session: Session, user_id: int, description: str, photo: str) -> UM:
+    def create(self, session: Session) -> UM:
         """Create user metadata
 
         :param session: session
-        :param user_id: user id
-        :param description: user description
-        :param photo: user photo
         :return: user metadata
         """
-        user_metadata = cls(user_id=user_id, description=description, photo=photo)
-        session.add(user_metadata)
+        session.add(self)
         session.commit()
-        session.refresh(user_metadata)
-        return user_metadata
+        session.refresh(self)
+        return self
 
     def update(self, session: Session) -> UM:
         """Update user metadata
