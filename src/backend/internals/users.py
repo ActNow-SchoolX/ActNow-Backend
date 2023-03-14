@@ -1,23 +1,28 @@
 from pydantic import BaseModel, validator
 from passlib.hash import sha256_crypt
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 import re, string
 
 NICKNAME_PATTERN = re.compile(r"^[a-zA-Z0-9]+$")
 PASSWORD_PATTERN = re.compile(r"[0-9]")
-FILE_FORMAT = ["png", "jpeg"]
+FILE_FORMAT = ["image/jpg", "image/png", "image/jpeg"]
 
 
 def get_password_hash(password):
     return sha256_crypt.hash(password)
 
 
-def validate_photo(content_type):
-    if content_type not in FILE_FORMAT:
-        raise
+def validate_photo(content_type, size):
+
+    state = True
+
+    if ((content_type not in FILE_FORMAT) or (int(size) > 4194304)):
+        state = False
+        
+    return state
 
 
-class User(BaseModel):
+class UserModel(BaseModel):
 
     nickname: str
     password: str 
