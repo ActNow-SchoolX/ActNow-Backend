@@ -1,14 +1,14 @@
 from fastapi import HTTPException
-from fastapi_sessions.frontends.implementations import CookieParameters, SessionCookie
+from fastapi_sessions.frontends.implementations import CookieParameters
 from src.backend.database import engine
-from src.backend.sessions import SQLBackend, BasicVerifier
+from src.backend.sessions import SQLBackend, FastSessionVerifier, FastSessionCookie
 from os import environ
 
 cookie_params = CookieParameters()
 """Cookie parameters."""
 
 # Uses UUID
-cookie = SessionCookie(
+cookie = FastSessionCookie(
     cookie_name=environ.get("SESSION_COOKIE_NAME"),
     identifier=environ.get("SESSION_IDENTIFIER"),
     auto_error=True,
@@ -20,7 +20,7 @@ cookie = SessionCookie(
 backend = SQLBackend(engine)
 """Session backend."""
 
-verifier = BasicVerifier(
+verifier = FastSessionVerifier(
     identifier=environ.get("SESSION_IDENTIFIER"),
     auto_error=True,
     backend=backend,

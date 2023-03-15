@@ -76,6 +76,17 @@ class User(SQLModel, table=True):
         """
         return session.exec(select(cls).offset(offset).limit(limit)).all()
 
+    @classmethod
+    def like_story(cls: type[U], session: Session, user_id: int, story_id: int) -> None:
+        """Like story
+
+        :param session: session
+        :param user_id: user id
+        :param story_id: story id
+        """
+        session.add(UserStoryLikes(user_id=user_id, story_id=story_id))
+        session.commit()
+
     def create(self, session: Session) -> U:
         """Create user
 
@@ -129,21 +140,16 @@ class UserMetadata(SQLModel, table=True):
         """
         return session.exec(select(cls).where(cls.user_id == user_id)).first()
 
-    @classmethod
-    def create(cls: type[UM], session: Session, user_id: int, description: str, photo: str) -> UM:
+    def create(self, session: Session) -> UM:
         """Create user metadata
 
         :param session: session
-        :param user_id: user id
-        :param description: user description
-        :param photo: user photo
         :return: user metadata
         """
-        user_metadata = cls(user_id=user_id, description=description, photo=photo)
-        session.add(user_metadata)
+        session.add(self)
         session.commit()
-        session.refresh(user_metadata)
-        return user_metadata
+        session.refresh(self)
+        return self
 
     def update(self, session: Session) -> UM:
         """Update user metadata
@@ -307,6 +313,24 @@ class Story(SQLModel, table=True):
         :return: stories
         """
         return session.exec(select(cls).where(cls.goal_id == goal_id).offset(offset).limit(limit)).all()
+
+    @classmethod
+    def add_user_like(cls: type[S], session: Session, story_id: int, user_id: int) -> S | None:
+        """Add user like
+
+        :param session: session
+        :param story_id: story id
+        :param user_id: user id
+        :return: story
+        """
+        story = cls.get_by_id(session, story_id)
+        if story:
+            story.liked_users.append(User.get_by_id(session, user_id))
+            session.add(story)
+            session.commit()
+            session.refresh(story)
+            return story
+        return None
 
     def create(self, session: Session) -> S:
         """Create story
