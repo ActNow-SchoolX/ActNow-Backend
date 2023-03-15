@@ -1,6 +1,8 @@
 from pydantic import BaseModel, validator
 from passlib.hash import sha256_crypt
-from fastapi import UploadFile, HTTPException
+from src.backend.database.orm import User, UserMetadata
+from sqlmodel import Session, SQLModel
+from src.backend.database import engine
 import re, string
 
 NICKNAME_PATTERN = re.compile(r"^[a-zA-Z0-9]+$")
@@ -22,7 +24,34 @@ def validate_photo(content_type, size):
     return state
 
 
-class UserModel(BaseModel):
+def user_registrate(user_data) -> User:
+
+    new_user = User(
+        nickname = user_data.nickname,
+        password = user_data.password,
+    )
+
+    with Session(engine) as session:
+        User.create(new_user, session)
+
+    return new_user
+
+
+def user_metadata_create(user_data, user_id) -> UserMetadata:
+
+    new_user_metadata = UserMetadata(
+        user_id = user_id, 
+        description = user_data.profile_description, 
+        photo = user_data.profile_photo,
+    )
+
+    with Session(engine) as session:
+        UserMetadata.create(new_user_metadata, session)
+
+    return new_user_metadata
+
+
+class UserRequest(BaseModel):
 
     nickname: str
     password: str 
@@ -70,6 +99,14 @@ class UserModel(BaseModel):
             )
         
         return value
+    
+class UserResponse(BaseModel):
+
+    id: int
+    nickname: str
+    profile_photo: str | None = None
+    profile_description: str | None = None
+
     
 
 
