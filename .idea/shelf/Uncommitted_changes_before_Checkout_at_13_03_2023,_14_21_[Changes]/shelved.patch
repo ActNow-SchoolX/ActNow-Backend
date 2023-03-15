@@ -1,0 +1,23 @@
+Index: test.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from fastapi import FastAPI, Request, HTTPException\nfrom pydantic import BaseModel\n# from fastapi.responses import JSONResponse\n\napp = FastAPI()\n\nclass Nicknames(BaseModel):\n    nickname: str\n\nnicknames = ['bob', 'aboba', 'somebody', 'biba', \"user\"]\n\n\ndef validate_nickname(value, nicknames):\n    for elem in nicknames:\n        if elem == value:\n            return True\n    return False\n@app.post(\"/validate_nickname\")\ndef get_nickname(request: Nicknames):\n    value = request.nickname\n    if validate_nickname() == True:\n        r = {\"nickname\": value, \"available\": True}\n    else:\n        r = {\"nickname\": value, \"available\": False}\n    return r
+===================================================================
+diff --git a/test.py b/test.py
+--- a/test.py	
++++ b/test.py	
+@@ -9,12 +9,13 @@
+ 
+ nicknames = ['bob', 'aboba', 'somebody', 'biba', "user"]
+ 
+-
++# логика
+ def validate_nickname(value, nicknames):
+     for elem in nicknames:
+         if elem == value:
+             return True
+     return False
++
+ @app.post("/validate_nickname")
+ def get_nickname(request: Nicknames):
+     value = request.nickname

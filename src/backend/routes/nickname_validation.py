@@ -12,7 +12,6 @@ class Nicknames(BaseModel):
     nickname: str
 
 
-
 # логика типа
 def validate_nickname(value, users):
     for elem in users:
@@ -26,16 +25,18 @@ def get_nickname(request: Nicknames):
     user1 = User(nickname="user1")
     user2 = User(nickname="user2")
 
-    with Session(engine) as session:
-        session.add(user1)
-        session.add(user2)
-        session.commit()
 
     # with Session(engine) as session:
     #    user = User(
     #        nickname='user1'
     #    )
     # user.create(session)
+
+    # можно так??
+    with Session(engine) as session:
+        session.add(user1)
+        session.add(user2)
+        session.commit()
 
     statement = select(User)
     users = session.exec(statement)
