@@ -26,13 +26,6 @@ def get_nickname(request: Nicknames):
     user2 = User(nickname="user2", password='password2')
 
 
-    # with Session(engine) as session:
-    #    user = User(
-    #        nickname='user1'
-    #    )
-    # user.create(session)
-
-    # можно так??
 
     with Session(engine) as session:
         user1.create(session)
