@@ -22,8 +22,8 @@ def validate_nickname(value, users):
 
 @app.post("/validate_nickname")
 def get_nickname(request: Nicknames):
-    user1 = User(nickname="user1")
-    user2 = User(nickname="user2")
+    user1 = User(nickname="user1", password='password1')
+    user2 = User(nickname="user2", password='password2')
 
 
     # with Session(engine) as session:
@@ -33,10 +33,10 @@ def get_nickname(request: Nicknames):
     # user.create(session)
 
     # можно так??
+
     with Session(engine) as session:
-        session.add(user1)
-        session.add(user2)
-        session.commit()
+        user1.create(session)
+        user2.create(session)
 
     statement = select(User)
     users = session.exec(statement)
