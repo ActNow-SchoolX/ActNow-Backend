@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from src.backend.sessions import SessionData
 from src.backend.dependencies import cookie, backend, verifier
 from src.backend.database import engine
-from src.backend.database.orm import User, UserMetadata
+from src.backend.database.orm import User, UserMetadata, Story
 
 app = FastAPI()
 app_security = HTTPBasic()
@@ -82,26 +82,47 @@ async def login(
         credentials: HTTPBasicCredentials = Depends(app_security),
         old_session: SessionData | None = Depends(verifier.get_last_session),
 ):
+    # Проверим, есть ли валидная старая сессия
     if old_session is not None:
         return {"message": "Already logged in"}
 
+    # Проверим правильность данных аутентификации пользователя
     user = verify_credentials(credentials.username, credentials.password)
 
+    # Если вернулась ошибка - вернем ее от маршрута как ответ пользователю
     if isinstance(user, HTTPException):
         raise user
 
+    # Создаем ОРМ объект сессии с минимальными данными пользователя, которого получили ранее
     session = SessionData(user_id=user.id, nickname=user.nickname)
 
+    # Добавляем в базу данных ОРМ объект сессии, который создали на шаге выше
     await backend.create(session.uuid, session)
 
+    # Прикрепляем куки к ответу пользователя UUID ОРМ объекта сессии
     cookie.attach_to_response(response, session.uuid)
 
+    # Возвращаем пользователю, что все ок!
     return {"message": "Logged in"}
 
 
-@app.get("/me", dependencies=[Depends(cookie)], response_model=UserResponse)
-async def me(session: SessionData = Depends(verifier)):
-    with Session(engine) as ass:
-        user = User.get_by_id(ass, _id=session.user_id)
+@app.post("/story", dependencies=[Depends(cookie)])
+async def create_story(session: SessionData = Depends(verifier)):
+    ...
 
-        return user
+
+@app.get("/story", dependencies=[Depends(cookie)])
+async def get_story(session: SessionData = Depends(verifier)):
+    ...
+
+
+
+@app.post("/logout")
+async def logout(response: Response, session_uuid: Depends(cookie)):
+    # В контроллере выше получаем uuid текущей сессии клиента, удаляем ее из базы данных по uuid
+    await backend.delete(session_uuid)
+
+    # Удалить из куки клиента uuid сессии, с которой он постучался на этот контроллер
+    cookie.delete_from_response(response)
+
+    return {"message": "Logged out"}

@@ -65,7 +65,7 @@ def create_fake_story(user_id: int, goal_id: int) -> Story:
 
 if __name__ == "__main__":
     fake_user = register_fake_user()
-    # create_fake_metadata(fake_user.id)
+    create_fake_metadata(fake_user.id)
 
     fake_goal = create_fake_goal(fake_user.id)
     create_fake_story(fake_user.id, fake_goal.id)
