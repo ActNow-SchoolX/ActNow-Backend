@@ -18,7 +18,7 @@ security = HTTPBasic()
 class UserAuth(BaseModel):
     nickname = str
     password = str
-8
+
 def verify_credentials(nickname: str, password: str) -> User | HTTPException:
     with Session(engine) as session:
         user = User.get_by_nickname(session, nickname)
@@ -34,7 +34,7 @@ def verify_credentials(nickname: str, password: str) -> User | HTTPException:
 @app.post("/login", dependencies=[Depends(cookie.get_last_cookie)])
 async def login(
         response: Response,
-        credentials: HTTPBasicCredentials = Depends(app_security),
+        credentials: HTTPBasicCredentials = Depends(security),
         old_session: SessionData | None = Depends(verifier.get_last_session),
 ):
     if old_session is not None:
