@@ -4,6 +4,7 @@ from src.backend.database import engine
 from src.backend.database.orm import Goal
 from pydantic import BaseModel, validator
 from datetime import datetime
+import dateutil.parser
 
 
 class GoalRequest(BaseModel):
@@ -25,15 +26,6 @@ class GoalRequest(BaseModel):
             raise ValueError('Описание голса превышает возможное количество символов')
         return description
 
-        return goal
-
-    @validator('deadline')
-    def check_description(cls, deadline):
-        if deadline is not datetime.now():
-            raise ValueError('')
-        return deadline
-
-        return goal
 
     @validator('price')
     def check_price(cls, price):
@@ -63,3 +55,7 @@ def goal_create(goal_data, user_id) -> Goal:
 
     with Session(engine) as transaction:
         Goal.create(goal, transaction)
+
+    goal.id = goal.id
+
+    return goal
