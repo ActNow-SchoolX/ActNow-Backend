@@ -9,6 +9,8 @@ app = APIRouter()
 def create_file(file: UploadFile):
     file_path = rf'{file.filename}'
     return file_path
+
+
 @app.post('/story', response_model=StoryResponse, dependencies=[Depends(cookie)])
 async def create_goal(response: Response, item: StoryRequest, session: SessionData = Depends(verifier)):
 
