@@ -1,6 +1,12 @@
-from fastapi import Request, HTTPException, APIRouter
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-# from fastapi.responses import JSONResponse
+from sqlmodel import Session
+
+from src.backend.database import engine
+from src.backend.database.orm import User
+from src.backend.dependencies import cookie, verifier
+from src.backend.sessions import SessionData
 
 app = APIRouter()
 
@@ -9,22 +15,27 @@ class Nicknames(BaseModel):
     nickname: str
 
 
-nicknames = ['bob', 'aboba', 'somebody', 'biba', "user"]
-
-
 # логика типа
-def validate_nickname(value, nicknames):
-    for elem in nicknames:
-        if elem == value:
-            return False
-    return True
+def validate_nickname(requested_nickname: str):
+    with Session(engine) as transaction:
+        user = User.get_by_nickname(transaction, nickname=requested_nickname)
+
+    if user is None:
+        return True
+
+    return False
 
 
-@app.post("/validate_nickname")
-def get_nickname(request: Nicknames):
-    value = request.nickname
-    if validate_nickname(value, nicknames):
-        r = {"nickname": value, "available": True}
+@app.post("/validate_nickname", dependencies=[Depends(cookie)])
+def get_nickname(request: Nicknames, _: SessionData = Depends(verifier)):
+    if validate_nickname(request.nickname):
+        return JSONResponse(
+            status_code=200,
+            content={"nickname": request.nickname, "available": True},
+        )
     else:
-        r = {"nickname": value, "available": False}
-    return r
+        return JSONResponse(
+            status_code=409,
+            content={"nickname": request.nickname, "available": False},
+        )
+
