@@ -1,23 +1,59 @@
-from pydantic import BaseModel, validator
+import re
+
 from passlib.hash import sha256_crypt
-from fastapi import UploadFile
-import re, string
+from pydantic import BaseModel, validator
+from sqlmodel import Session
+
+from src.backend.database import engine
+from src.backend.database.orm import User, UserMetadata
 
 NICKNAME_PATTERN = re.compile(r"^[a-zA-Z0-9]+$")
 PASSWORD_PATTERN = re.compile(r"[0-9]")
-FILE_FORMAT = ["png", "jpeg"]
+FILE_FORMAT = ["image/jpg", "image/png", "image/jpeg"]
 
 
 def get_password_hash(password):
     return sha256_crypt.hash(password)
 
 
-def validate_photo(content_type):
-    if content_type not in FILE_FORMAT:
-        raise
+def validate_photo(content_type, size):
+
+    state = True
+
+    if (content_type not in FILE_FORMAT) or (int(size) > 4194304):
+        state = False
+        
+    return state
 
 
-class User(BaseModel):
+def user_registrate(user_data) -> User:
+
+    new_user = User(
+        nickname=user_data.nickname,
+        password=user_data.password,
+    )
+
+    with Session(engine) as session:
+        User.create(new_user, session)
+
+    return new_user
+
+
+def user_metadata_create(user_data, user_id) -> UserMetadata:
+
+    new_user_metadata = UserMetadata(
+        user_id=user_id,
+        description=user_data.profile_description,
+        photo=user_data.profile_photo,
+    )
+
+    with Session(engine) as session:
+        UserMetadata.create(new_user_metadata, session)
+
+    return new_user_metadata
+
+
+class UserRequest(BaseModel):
 
     nickname: str
     password: str 
@@ -39,7 +75,8 @@ class User(BaseModel):
         return value
     
     @validator("password")
-    def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и по длинам.
+    def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и
+        # по длинам.
 
         if ((not PASSWORD_PATTERN.search(value))    # Сопоставляю с регулярным выражением
             or (len(value) > 20)
@@ -66,6 +103,10 @@ class User(BaseModel):
         
         return value
 
-    
 
+class UserResponse(BaseModel):
 
+    id: int
+    nickname: str
+    profile_photo: str | None = None
+    profile_description: str | None = None
