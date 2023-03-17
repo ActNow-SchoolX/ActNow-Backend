@@ -4,11 +4,9 @@ from src.backend.database import engine
 from src.backend.database.orm import Goal
 from pydantic import BaseModel, validator
 from datetime import datetime
-import dateutil.parser
 
 
 class GoalRequest(BaseModel):
-    user_id: str
     title: str
     description: str
     price: float | None
