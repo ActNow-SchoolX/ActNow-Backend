@@ -15,7 +15,7 @@ def create_file(file: UploadFile):
 async def create_goal(response: Response, item: StoryRequest, session: SessionData = Depends(verifier)):
 
 
-    story = story_create(item, session.user_id)
+    story = story_create(session.user_id)
     return StoryResponse(user_id=story.user_id,
                          story_id=story.id,
                          photo=create_file(),
