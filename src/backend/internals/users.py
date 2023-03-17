@@ -1,9 +1,11 @@
-from pydantic import BaseModel, validator
+import re
+
 from passlib.hash import sha256_crypt
-from src.backend.database.orm import User, UserMetadata
-from sqlmodel import Session, SQLModel
+from pydantic import BaseModel, validator
+from sqlmodel import Session
+
 from src.backend.database import engine
-import re, string
+from src.backend.database.orm import User, UserMetadata
 
 NICKNAME_PATTERN = re.compile(r"^[a-zA-Z0-9]+$")
 PASSWORD_PATTERN = re.compile(r"[0-9]")
@@ -18,7 +20,7 @@ def validate_photo(content_type, size):
 
     state = True
 
-    if ((content_type not in FILE_FORMAT) or (int(size) > 4194304)):
+    if (content_type not in FILE_FORMAT) or (int(size) > 4194304):
         state = False
         
     return state
@@ -27,8 +29,8 @@ def validate_photo(content_type, size):
 def user_registrate(user_data) -> User:
 
     new_user = User(
-        nickname = user_data.nickname,
-        password = user_data.password,
+        nickname=user_data.nickname,
+        password=user_data.password,
     )
 
     with Session(engine) as session:
@@ -40,9 +42,9 @@ def user_registrate(user_data) -> User:
 def user_metadata_create(user_data, user_id) -> UserMetadata:
 
     new_user_metadata = UserMetadata(
-        user_id = user_id, 
-        description = user_data.profile_description, 
-        photo = user_data.profile_photo,
+        user_id=user_id,
+        description=user_data.profile_description,
+        photo=user_data.profile_photo,
     )
 
     with Session(engine) as session:
@@ -73,7 +75,8 @@ class UserRequest(BaseModel):
         return value
     
     @validator("password")
-    def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и по длинам.
+    def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и
+        # по длинам.
 
         if ((not PASSWORD_PATTERN.search(value))    # Сопоставляю с регулярным выражением
             or (len(value) > 20)
@@ -99,7 +102,8 @@ class UserRequest(BaseModel):
             )
         
         return value
-    
+
+
 class UserResponse(BaseModel):
 
     id: int

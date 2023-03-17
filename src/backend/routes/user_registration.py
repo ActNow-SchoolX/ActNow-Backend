@@ -1,10 +1,14 @@
 from fastapi import UploadFile, APIRouter, HTTPException
-from src.backend.internals.users import (UserRequest, 
-                                         UserResponse, 
-                                         get_password_hash, 
-                                         validate_photo, 
-                                         user_registrate, 
-                                         user_metadata_create,)
+from src.backend.internals.users import (
+    UserRequest,
+    UserResponse,
+    get_password_hash,
+    validate_photo,
+    user_registrate,
+    user_metadata_create,
+)
+from pathlib import Path
+from uuid import uuid4
 
 app = APIRouter()
 
@@ -36,12 +40,17 @@ def post_user(file: UploadFile | None = None):
             detail='Загружаемый файл не соответствует условиям'
         )
     
-    file_path = rf'{file.filename}'
+    filename = f'{str(uuid4())}.{file.filename.split(".")[-1]}'
 
-    with open(file_path, "wb+") as file_object:
+    upload_dir = Path(__file__).parent.parent.parent.parent / "uploads"
+    upload_dir.mkdir(exist_ok=True)
+
+    file_path = upload_dir / filename
+
+    with file_path.open("wb+") as file_object:
         file_object.write(file.file.read())
 
-    return file_path
+    return str(file_path)
 
 
     
