@@ -3,14 +3,14 @@ from sqlmodel import Session, SQLModel
 from src.backend.database import engine
 from src.backend.database.orm import Goal
 from pydantic import BaseModel, validator
+from datetime import datetime
 
 
 class GoalRequest(BaseModel):
-    user_id: str
     title: str
     description: str
     price: float | None
-    deadline: str | None
+    deadline: datetime | None
 
     @validator('title')
     def check_title(cls, title):
@@ -24,12 +24,18 @@ class GoalRequest(BaseModel):
             raise ValueError('Описание голса превышает возможное количество символов')
         return description
 
-        return goal
+    @validator('deadline')
+    def check_deadline(cls, deadline):
+        now = datetime.datetime.now()
+        diff = deadline - now
+        if diff.total_seconds() < 3600:
+            raise ValueError('Недопустимое время')
+        return deadline
 
     @validator('price')
     def check_price(cls, price):
         if price is not None:
-            if len(price) < 1:
+            if price < 1:
                 raise ValueError('Прайс должен превышать 1 рубль')
             return price
 
@@ -40,7 +46,7 @@ class GoalResponse(BaseModel):
     title: str
     description: str
     price: float
-    deadline: str
+    deadline: datetime
 
 
 def goal_create(goal_data, user_id) -> Goal:
@@ -54,3 +60,7 @@ def goal_create(goal_data, user_id) -> Goal:
 
     with Session(engine) as transaction:
         Goal.create(goal, transaction)
+
+    goal.id = goal.id
+
+    return goal
