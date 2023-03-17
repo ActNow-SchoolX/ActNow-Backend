@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, Response
+from fastapi import Depends, Response, APIRouter
 from src.backend.dependencies import cookie, backend
 from fastapi.responses import JSONResponse
 
-app = FastAPI()
+app = APIRouter()
 
 
 @app.post("/logout", response_model=None)
