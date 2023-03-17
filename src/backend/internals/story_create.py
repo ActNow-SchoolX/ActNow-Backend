@@ -14,6 +14,15 @@ def check_description(description):
     return description
 
 
+def check_photo(content_type, size, photo):
+    if content_type not in content_type('image'):
+        raise TypeError
+    elif int(size) > 4194304:
+        raise MemoryError
+    else:
+        return photo
+
+
 class StoryResponse(BaseModel):
     id: int
     user_id: int
