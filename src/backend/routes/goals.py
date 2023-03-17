@@ -12,6 +12,27 @@ class GoalRequest(BaseModel):
     price: float | None
     deadline: str | None
 
+    @validator('title')
+    def check_title(cls, title):
+        if len(title) > 79:
+            raise ValueError('Название голса превышает возможное количество символов')
+        return title
+
+    @validator('description')
+    def check_description(cls, description):
+        if len(description) > 1000:
+            raise ValueError('Описание голса превышает возможное количество символов')
+        return description
+
+        return goal
+
+    @validator('price')
+    def check_price(cls, price):
+        if price is not None:
+            if len(price) < 1:
+                raise ValueError('Прайс должен превышать 1 рубль')
+            return price
+
 
 class GoalResponse(BaseModel):
     id: int
@@ -35,25 +56,4 @@ def goal_create(goal_data, user_id) -> Goal:
         Goal.create(goal, transaction)
 
 
-@validator('title')
-def check_title(cls, title):
-    if len(title) > 79:
-        raise ValueError('Название голса превышает возможное количество символов')
-    return title
 
-
-@validator('description')
-def check_description(cls, description):
-    if len(description) > 1000:
-        raise ValueError('Описание голса превышает возможное количество символов')
-    return description
-
-    return goal
-
-
-@validator('price')
-def check_price(cls, price):
-    if price is not None:
-        if len(price) < 1:
-            raise ValueError('Прайс должен превышать 1 рубль')
-        return price
