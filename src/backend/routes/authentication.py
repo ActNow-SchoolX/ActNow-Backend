@@ -1,7 +1,8 @@
-from fastapi import Depends, APIRouter, HTTPException
-from fastapi.openapi.models import Response
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel, validator
+from fastapi import APIRouter
+from fastapi import Depends, Response
+from fastapi.exceptions import HTTPException
+from fastapi.security import HTTPBasicCredentials, HTTPBasic
+from pydantic import BaseModel
 from sqlmodel import Session
 
 from src.backend.database import engine
@@ -17,7 +18,7 @@ security = HTTPBasic()
 class UserAuth(BaseModel):
     nickname = str
     password = str
-
+8
 def verify_credentials(nickname: str, password: str) -> User | HTTPException:
     with Session(engine) as session:
         user = User.get_by_nickname(session, nickname)
