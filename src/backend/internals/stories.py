@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from fastapi import UploadFile
+from fastapi import File
 from pydantic import BaseModel
 from sqlmodel import Session
 
 from src.backend.database import engine
-from src.backend.database.orm import Story
+from src.backend.database.orm import Story, Goal
 
 
 def check_description(description):
@@ -14,13 +14,21 @@ def check_description(description):
     return description
 
 
-def check_photo(content_type, size, photo):
-    if content_type not in content_type('image'):
-        raise TypeError
-    elif int(size) > 4194304:
-        raise MemoryError
+def check_photo(photo: File):
+    if photo.content_type not in ('image/png', 'image/jpg', 'image/jpeg'):
+        raise TypeError('File content must be image.')
+    elif int(photo.size) > 4194304:
+        raise ValueError('File size must be < 4194304.')
     else:
         return photo
+
+
+def validate_goal_exists(goal_id):
+    with Session(engine) as transaction:
+        if Goal.get_by_id(transaction, goal_id) is not None:
+            return True
+
+        return False
 
 
 class StoryResponse(BaseModel):

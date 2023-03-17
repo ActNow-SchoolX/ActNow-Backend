@@ -1,10 +1,11 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 
 from src.backend.dependencies import cookie, verifier
-from src.backend.internals.story_create import story_create, StoryResponse
+from src.backend.internals.stories import story_create, StoryResponse, check_photo, validate_goal_exists, \
+    check_description
 from src.backend.sessions import SessionData
 
 app = APIRouter()
@@ -17,6 +18,11 @@ async def create_goal(
         photo: UploadFile = File(...),
         session: SessionData = Depends(verifier)
 ):
+    try:
+        photo = check_photo(photo)
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=e)
+
     filename = f'{str(uuid4())}.{photo.filename.split(".")[-1]}'
 
     upload_dir = Path(__file__).parent.parent.parent.parent / "uploads"
@@ -27,11 +33,13 @@ async def create_goal(
     with file_path.open("wb+") as file_object:
         file_object.write(photo.file.read())
 
-    # реализуйте валидацию голса, который точно должен быть в базе
-    ...
+    if not validate_goal_exists(goal_id):
+        raise HTTPException(status_code=404, detail="Goal with specified id is not found.")
 
-    # реализуйте валидацию описания по таске (у вас уже есть валидатор, попробуйте пришить его сюда)
-    ...
+    try:
+        description = check_description(description)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=e)
 
     story = story_create(session.user_id, goal_id, description, str(file_path))
 
