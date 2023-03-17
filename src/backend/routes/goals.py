@@ -24,17 +24,17 @@ class GoalRequest(BaseModel):
             raise ValueError('Описание голса превышает возможное количество символов')
         return description
 
-    @validator('deadline')
-    def check_deadline(cls, deadline):
-        now = datetime.datetime.now()
-        diff = deadline - now
-        if diff.total_seconds() < 3600:
-            raise ValueError('Недопустимое время')
-        return deadline
+    # @validator('deadline')
+    # def check_deadline(cls, deadline):
+    #     now = datetime.datetime.now()
+    #     diff = deadline - now
+    #     if diff.total_seconds() < 3600:
+    #         raise ValueError('Недопустимое время')
+    #     return deadline
 
     @validator('price')
     def check_price(cls, price):
-        if price is not None:
+        if (price is not None) and (price != 0):
             if price < 1:
                 raise ValueError('Прайс должен превышать 1 рубль')
             return price
