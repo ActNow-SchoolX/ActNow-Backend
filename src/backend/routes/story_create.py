@@ -4,11 +4,10 @@ from src.backend.database import engine
 from src.backend.database.orm import Story
 from pydantic import BaseModel, validator
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status, UploadFile
 
 class StoryRequest(BaseModel):
     user_id: int
-    goal_title: str
+    goal_id: str
     photo: str
     description: str
 
@@ -29,11 +28,9 @@ class StoryResponse(BaseModel):
     id: int
     user_id: int
     photo: str
-    description: str
+    description: str | None
 
-def create_file(file: UploadFile):
-    file_path = rf'{file.filename}'
-    return file_path
+
 def story_create(story_data, user_id) -> Story:
     story = Story(
         story_id=story_data.id,
