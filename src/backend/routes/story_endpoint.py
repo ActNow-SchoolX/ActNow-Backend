@@ -1,25 +1,45 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status, UploadFile
-from story_create import story_create, StoryResponse, StoryRequest
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, UploadFile, File
+
+from src.backend.dependencies import cookie, verifier
+from src.backend.routes.story_create import story_create, StoryResponse
 from src.backend.sessions import SessionData
-from src.backend.dependencies import cookie, backend, verifier
 
 app = APIRouter()
 
 
+# Уточните, нужен ли он вам
 def create_file(file: UploadFile):
     file_path = rf'{file.filename}'
     return file_path
-@app.post('/story', response_model=StoryResponse, dependencies=[Depends(cookie)])
-async def create_goal(response: Response, item: StoryRequest, session: SessionData = Depends(verifier)):
 
 
-    story = story_create(item, session.user_id)
+@app.post('/story', response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=201)
+async def create_goal(
+        goal_id: int,
+        description: str,
+        photo: UploadFile = File(...),
+        session: SessionData = Depends(verifier)
+):
+    filename = f'{str(uuid4())}.{photo.filename.split(".")[-1]}'
 
-    if story is not None:
-        response.status_code = status.HTTP_201_CREATED
-        return StoryResponse(user_id=story.user_id,
-                            goal_id=story.id,
-                            photo= create_file(),
-                            description=story.description,
-                            )
+    upload_dir = Path(__file__).parent.parent.parent.parent / "uploads"
+    upload_dir.mkdir(exist_ok=True)
+
+    file_path = upload_dir / filename
+
+    with file_path.open("wb+") as file_object:
+        file_object.write(photo.file.read())
+
+    # реализуйте валидацию голса, который точно должен быть в базе
+    ...
+
+    # реализуйте валидацию описания по таске (у вас уже есть валидатор, попробуйте пришить его сюда)
+    ...
+
+    story = story_create(session.user_id, goal_id, description, str(file_path))
+
+    return story
 

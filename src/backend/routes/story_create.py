@@ -1,47 +1,45 @@
 from __future__ import annotations
+
+from fastapi import UploadFile
+from pydantic import BaseModel
 from sqlmodel import Session
+
 from src.backend.database import engine
 from src.backend.database.orm import Story
-from pydantic import BaseModel, validator
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status, UploadFile
 
-class StoryRequest(BaseModel):
-    user_id: int
-    goal_title: str
-    photo: str
-    description: str
-
-    @validator('photo')
-    def check_photo(cls, photo):
-        if photo is None:
-            raise NotADirectoryError('Изображение не найдено')
-        return photo
-
-    @validator('description')
-    def check_description(cls, description):
-        if len(description) > 1000:
-            raise ValueError('Описание истории превышает возможное количество символов')
-        return description
+def check_description(description):
+    if len(description) > 1000:
+        raise ValueError('Описание истории превышает возможное количество символов')
+    return description
 
 
 class StoryResponse(BaseModel):
     id: int
     user_id: int
+    goal_id: int
     photo: str
-    description: str
+    summary: str
+    date_create: float
 
+
+# уточните, нужен ли он вам
 def create_file(file: UploadFile):
     file_path = rf'{file.filename}'
     return file_path
-def story_create(story_data, user_id) -> Story:
+
+
+def story_create(user_id, goal_id: int, photo: str, description: str) -> Story:
     story = Story(
-        story_id=story_data.id,
-        description=story_data.description,
-        photo=story_data.photo,
         user_id=user_id,
+        goal_id=goal_id,
+        summary=description,
+        photo=photo
     )
 
     with Session(engine) as transaction:
-        Story.create(story, transaction)
+        story = Story.create(story, transaction)
+
+        story.date_create = story.date_create.timestamp()
+
     return story
