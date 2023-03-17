@@ -42,4 +42,3 @@ async def create_goal(
     story = story_create(session.user_id, goal_id, description, str(file_path))
 
     return story
-
