@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Response, APIRouter
+from fastapi import FastAPI, Depends, Response
 from src.backend.dependencies import cookie, backend
 from fastapi.responses import JSONResponse
 
