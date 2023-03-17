@@ -1,41 +1,35 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, HTTPException, Depends
 from src.backend.dependencies import cookie, backend, verifier
 from sqlmodel import Session
-from pydantic import BaseModel
 
 
-from src.backend.routes.goals_create import GoalsEntity
+from src.backend.routes.goals import GoalRequest, GoalResponse, goal_create
 from src.backend.sessions import SessionData
 from src.backend.dependencies import cookie, backend, verifier
 from src.backend.database import engine
-from src.backend.database.orm import User, UserMetadata
+from src.backend.database.orm import User
 
 app = APIRouter()
 
-class Goal(BaseModel):
-    title: str
-    description: str
-    first_story: str
-    price: float | None = None
-    date: str | None = None
-
-@app.post('/create_goal', dependencies=Depends[("cookie")])
-async def create_goal(item: GoalsEntity, session: SessionData = Depends(verifier)):
+@app.post('/goal', response_model=GoalResponse, dependencies=[Depends(cookie)])
+async def create_goal(item: GoalRequest, session: SessionData = Depends(verifier)):
 
     with Session(engine) as ass:
-        
-        user = User.get_by_id(ass, _id=session.user_id)
 
-        response = {
-        'user_id': user.id,
-        'title': item.title,
-        'description': item.description,
-        'story': item.first_story,
-        'price': item.price,
-        'date': item.date
-        }
+        new_goal = goal_create(item, session.user_id)
+
+        if new_goal is not None:
+            raise HTTPException(
+                status_code=201,
+                detail="Голс успешно создан!"
+            )
         
-        return response
+        return GoalResponse(id=new_goal.id,
+                            user_id=new_goal.user_id,
+                            title=new_goal.title,
+                            description=new_goal.description,
+                            price=new_goal.price,
+                            deadline=new_goal.deadline)
         
 
     
