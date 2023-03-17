@@ -23,12 +23,6 @@ class StoryResponse(BaseModel):
     date_create: float
 
 
-# уточните, нужен ли он вам
-def create_file(file: UploadFile):
-    file_path = rf'{file.filename}'
-    return file_path
-
-
 def story_create(user_id, goal_id: int, photo: str, description: str) -> Story:
     story = Story(
         user_id=user_id,

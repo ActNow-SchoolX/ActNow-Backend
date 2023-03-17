@@ -10,12 +10,6 @@ from src.backend.sessions import SessionData
 app = APIRouter()
 
 
-# Уточните, нужен ли он вам
-def create_file(file: UploadFile):
-    file_path = rf'{file.filename}'
-    return file_path
-
-
 @app.post('/story', response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=201)
 async def create_goal(
         goal_id: int,
