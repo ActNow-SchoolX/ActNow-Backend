@@ -43,7 +43,7 @@ def check_title(cls, title):
 
 
 @validator('description')
-def check_title(cls, description):
+def check_description(cls, description):
     if len(description) > 1000:
         raise ValueError('Описание голса превышает возможное количество символов')
     return description
@@ -51,3 +51,9 @@ def check_title(cls, description):
     return goal
 
 
+@validator('price')
+def check_price(cls, price):
+    if price is not None:
+        if len(price) < 1:
+            raise ValueError('Прайс должен превышать 1 рубль')
+        return price
