@@ -102,7 +102,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env_example
+.env
 .venv
 env/
 venv/
@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.env
+.gitignore
+whatthefuck.sqlite
+.idea/ActNow-Backend-1.iml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.gitignore
+.gitignore

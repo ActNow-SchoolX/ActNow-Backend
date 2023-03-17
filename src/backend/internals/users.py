@@ -110,7 +110,3 @@ class UserResponse(BaseModel):
     nickname: str
     profile_photo: str | None = None
     profile_description: str | None = None
-
-    
-
-
