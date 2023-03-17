@@ -15,11 +15,10 @@ async def create_goal(response: Response, item: StoryRequest, session: SessionDa
 
     story = story_create(item, session.user_id)
 
-    if story is not None:
-        response.status_code = status.HTTP_201_CREATED
-        return StoryResponse(user_id=story.user_id,
-                            story_id=story.id,
-                            photo= create_file(),
-                            description=story.description,
+    response.status_code = status.HTTP_201_CREATED
+    return StoryResponse(user_id=story.user_id,
+                         story_id=story.id,
+                         photo= create_file(),
+                         description=story.description,
                             )
 
