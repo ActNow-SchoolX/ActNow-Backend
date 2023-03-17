@@ -54,6 +54,3 @@ def goal_create(goal_data, user_id) -> Goal:
 
     with Session(engine) as transaction:
         Goal.create(goal, transaction)
-
-
-
