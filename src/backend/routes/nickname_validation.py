@@ -1,43 +1,41 @@
-from fastapi import Request, HTTPException, APIRouter
-from pydantic import BaseModel
-from src.backend.database.orm import User
-from sqlmodel import Session, SQLModel, select
-from src.backend.database import engine
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from sqlmodel import Session
+
+from src.backend.database import engine
+from src.backend.database.orm import User
+from src.backend.dependencies import cookie, verifier
+from src.backend.sessions import SessionData
 
 app = APIRouter()
+
 
 class Nicknames(BaseModel):
     nickname: str
 
+
 # логика типа
-def validate_nickname(value, users):
-    for elem in users:
-        if elem == value:
-            return False
-    return True
+def validate_nickname(requested_nickname: str):
+    with Session(engine) as transaction:
+        user = User.get_by_nickname(transaction, nickname=requested_nickname)
 
-@app.post("/validate_nickname")
-def get_nickname(request: Nicknames):
-    user1 = User(nickname="user1", password='password1')
-    user2 = User(nickname="user2", password='password2')
+    if user is None:
+        return True
 
-    with Session(engine) as session:
-        user1.create(session)
-        user2.create(session)
+    return False
 
-        statement = select(User)
-        users = session.exec(statement)
 
-    value = request.nickname
-    if validate_nickname(value, users):
+@app.post("/validate_nickname", dependencies=[Depends(cookie)])
+def get_nickname(request: Nicknames, _: SessionData = Depends(verifier)):
+    if validate_nickname(request.nickname):
         return JSONResponse(
             status_code=200,
-            content={"nickname": value, "available": True},
+            content={"nickname": request.nickname, "available": True},
         )
     else:
         return JSONResponse(
             status_code=409,
-            content={"nickname": value, "available": False},
+            content={"nickname": request.nickname, "available": False},
         )
 
