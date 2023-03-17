@@ -31,9 +31,9 @@ def get_nickname(request: Nicknames):
         user1.create(session)
         user2.create(session)
 
-    statement = select(User)
-    users = session.exec(statement)
-    # print(users)
+        statement = select(User)
+        users = session.exec(statement)
+        # print(users)
 
     value = request.nickname
     if validate_nickname(value, users):
