@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException, APIRouter, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-app = FastAPI()
+app = APIRouter()
 security = HTTPBasic()
 
 users = {
@@ -9,13 +9,14 @@ users = {
     "user2": "password2",
 }
 
+
 def validate_user(username: str, password: str):
     if username not in users or password != users[username]:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
 
 @app.post("/login")
-async def login(credentials: HTTPBasicCredentials = security):
+async def login(credentials: HTTPBasicCredentials = Depends(security)):
     validate_user(credentials.username, credentials.password)
     return {"success": True, "message": "Logged in successfully!"}
 
