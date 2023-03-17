@@ -1,16 +1,19 @@
 from __future__ import annotations
-from sqlmodel import Session, SQLModel
+
+from datetime import datetime
+
+from pydantic import BaseModel, validator, Field
+from sqlmodel import Session
+
 from src.backend.database import engine
 from src.backend.database.orm import Goal
-from pydantic import BaseModel, validator
-from datetime import datetime
 
 
 class GoalRequest(BaseModel):
     title: str
     description: str
-    price: float | None
-    deadline: float | None
+    price: float | None = None
+    deadline: float | None = None
 
     @validator('title')
     def check_title(cls, title):
@@ -24,17 +27,17 @@ class GoalRequest(BaseModel):
             raise ValueError('Описание голса превышает возможное количество символов')
         return description
 
-    @validator('deadline')
+    @validator('deadline', )
     def check_deadline(cls, deadline):
         now = datetime.now().timestamp()
         diff = deadline - now
-        if diff.total_seconds() < 3600:
+        if diff < 3600:
             raise ValueError('Недопустимое время')
         return deadline
 
     @validator('price')
     def check_price(cls, price):
-        if (price is not None) and (price != 0):
+        if price is not None:
             if price < 1:
                 raise ValueError('Стоимость должна превышать 1 рубль')
             return price
@@ -46,7 +49,7 @@ class GoalResponse(BaseModel):
     title: str
     description: str
     price: float
-    deadline: datetime
+    deadline: float | None
 
 
 def goal_create(goal_data, user_id) -> Goal:
@@ -59,8 +62,8 @@ def goal_create(goal_data, user_id) -> Goal:
     )
 
     with Session(engine) as transaction:
-        Goal.create(goal, transaction)
+        goal = Goal.create(goal, transaction)
 
-    goal.id = goal.id
+        goal.deadline = goal.deadline.timestamp()
 
     return goal
