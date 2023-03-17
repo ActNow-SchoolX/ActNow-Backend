@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import FastAPI, Depends, Response
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
 from fastapi.exceptions import HTTPException
@@ -116,9 +118,8 @@ async def get_story(session: SessionData = Depends(verifier)):
     ...
 
 
-
 @app.post("/logout")
-async def logout(response: Response, session_uuid: Depends(cookie)):
+async def logout(response: Response, session_uuid: UUID = Depends(cookie)):
     # В контроллере выше получаем uuid текущей сессии клиента, удаляем ее из базы данных по uuid
     await backend.delete(session_uuid)
 
