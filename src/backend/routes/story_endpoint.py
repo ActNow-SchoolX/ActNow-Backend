@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, UploadFile, File
 
 from src.backend.dependencies import cookie, verifier
-from src.backend.routes.story_create import story_create, StoryResponse
+from src.backend.internals.story_create import story_create, StoryResponse
 from src.backend.sessions import SessionData
 
 app = APIRouter()
