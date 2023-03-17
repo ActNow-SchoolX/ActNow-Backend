@@ -1,4 +1,4 @@
-from fastapi import UploadFile, APIRouter, HTTPException
+from fastapi import UploadFile, APIRouter, HTTPException, Depends
 from src.backend.internals.users import (
     UserRequest,
     UserResponse,
@@ -9,6 +9,12 @@ from src.backend.internals.users import (
 )
 from pathlib import Path
 from uuid import uuid4
+
+from sqlmodel import Session
+from src.backend.database import engine
+from src.backend.dependencies import cookie, verifier
+from src.backend.sessions import SessionData
+from src.backend.database.orm import User
 
 app = APIRouter()
 
@@ -51,6 +57,40 @@ def post_user(file: UploadFile | None = None):
         file_object.write(file.file.read())
 
     return str(file_path)
+
+
+@app.get("/get_user", dependencies=[Depends(cookie)])
+def read_user(user_id: int | None = None, nickname: str | None = None):
+
+    with Session(engine) as transaction:
+        if user_id != None and nickname != None:
+
+            raise HTTPException(
+                "Необходимо передать только один параметр: айди пользователя или его никнейм"
+            )
+        
+        elif user_id != None and nickname == None:
+
+            user = User.get_by_id(transaction, user_id)
+            return user
+        
+        elif user_id == None and nickname != None:
+
+            user = User.get_by_nickname(transaction, nickname)
+            return user
+        
+        else:
+
+            raise HTTPException (
+                "Необходимо передать айди или никнейм"
+            )
+        
+
+@app.put("/update_user", dependencies=[Depends(cookie)])
+def update_user():
+    pass 
+
+        
 
 
     
