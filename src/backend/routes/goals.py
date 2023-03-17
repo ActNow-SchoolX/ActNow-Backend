@@ -3,6 +3,7 @@ from sqlmodel import Session, SQLModel
 from src.backend.database import engine
 from src.backend.database.orm import Goal
 from pydantic import BaseModel, validator
+from datetime import datetime
 
 
 class GoalRequest(BaseModel):
@@ -10,7 +11,7 @@ class GoalRequest(BaseModel):
     title: str
     description: str
     price: float | None
-    deadline: str | None
+    deadline: datetime | None
 
     @validator('title')
     def check_title(cls, title):
@@ -26,10 +27,18 @@ class GoalRequest(BaseModel):
 
         return goal
 
+    @validator('deadline')
+    def check_description(cls, deadline):
+        if deadline is not datetime.now():
+            raise ValueError('')
+        return deadline
+
+        return goal
+
     @validator('price')
     def check_price(cls, price):
         if price is not None:
-            if len(price) < 1:
+            if price < 1:
                 raise ValueError('Прайс должен превышать 1 рубль')
             return price
 
@@ -40,7 +49,7 @@ class GoalResponse(BaseModel):
     title: str
     description: str
     price: float
-    deadline: str
+    deadline: datetime
 
 
 def goal_create(goal_data, user_id) -> Goal:
