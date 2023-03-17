@@ -28,7 +28,7 @@ class StoryResponse(BaseModel):
     id: int
     user_id: int
     photo: str
-    description: str
+    description: str | None
 
 
 def story_create(story_data, user_id) -> Story:
