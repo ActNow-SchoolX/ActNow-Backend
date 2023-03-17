@@ -3,6 +3,7 @@ from src.backend.dependencies import cookie, backend, verifier
 from sqlmodel import Session
 from pydantic import BaseModel
 
+
 from src.backend.routes.goals_create import GoalsEntity
 from src.backend.sessions import SessionData
 from src.backend.dependencies import cookie, backend, verifier
@@ -15,14 +16,14 @@ class Goal(BaseModel):
     title: str
     description: str
     first_story: str
-    price: str | None = None
+    price: float | None = None
     date: str | None = None
 
-
-@app.post('/create_goal', dependencies=[Depends(cookie)])
+@app.post('/create_goal', dependencies=Depends[("cookie")])
 async def create_goal(item: GoalsEntity, session: SessionData = Depends(verifier)):
 
     with Session(engine) as ass:
+        
         user = User.get_by_id(ass, _id=session.user_id)
 
         response = {
