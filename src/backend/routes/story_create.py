@@ -7,7 +7,7 @@ from pydantic import BaseModel, validator
 
 class StoryRequest(BaseModel):
     user_id: int
-    goal_title: str
+    goal_id: str
     photo: str
     description: str
 
