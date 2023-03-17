@@ -15,18 +15,16 @@ app = APIRouter()
 @app.post('/goal', response_model=GoalResponse, dependencies=[Depends(cookie)])
 async def create_goal(response: Response, item: GoalRequest, session: SessionData = Depends(verifier)):
 
-    with Session(engine) as ass:
+    new_goal = goal_create(item, session.user_id)
 
-        new_goal = goal_create(item, session.user_id)
-
-        if new_goal is not None:
-            response.status_code = status.HTTP_201_CREATED
-            return GoalResponse(id=new_goal.id,
-                                user_id=new_goal.user_id,
-                                title=new_goal.title,
-                                description=new_goal.description,
-                                price=new_goal.price,
-                                deadline=new_goal.deadline)
+    if new_goal is not None:
+        response.status_code = status.HTTP_201_CREATED
+        return GoalResponse(id=new_goal.id,
+                            user_id=new_goal.user_id,
+                            title=new_goal.title,
+                            description=new_goal.description,
+                            price=new_goal.price,
+                            deadline=new_goal.deadline)
         
 
     
