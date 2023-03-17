@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException
 from src.backend.dependencies import cookie, backend, verifier
 from sqlmodel import Session
 
@@ -10,7 +10,6 @@ from src.backend.database import engine
 from src.backend.database.orm import User
 
 app = APIRouter()
-
 
 @app.post('/goal', response_model=GoalResponse, dependencies=[Depends(cookie)])
 async def create_goal(item: GoalRequest, session: SessionData = Depends(verifier)):
