@@ -16,7 +16,7 @@ async def create_goal(response: Response, item: StoryRequest, session: SessionDa
     story = story_create(item, session.user_id)
     return StoryResponse(user_id=story.user_id,
                          story_id=story.id,
-                         photo= create_file(),
+                         photo=create_file(),
                          description=story.description,
-                            )
+                         )
 
