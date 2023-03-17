@@ -11,7 +11,6 @@ from src.backend.database.orm import User
 
 app = APIRouter()
 
-@app.post("/login", dependencies=[Depends(cookie.get_last_cookie)])
 
 @app.post('/goal', response_model=GoalResponse, dependencies=[Depends(cookie)])
 async def create_goal(item: GoalRequest, session: SessionData = Depends(verifier)):
