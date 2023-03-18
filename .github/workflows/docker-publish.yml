@@ -28,10 +28,10 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v4
         with:
           token: ${{ secrets.DOCKER_TOKEN }}
           context: .
           push: true
-          tags: latest, ${{ github.run_number }}
+          tags: ar4ikov/actnow-backend:latest, ${{ github.run_number }}
           labels: stable
