@@ -32,5 +32,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ar4ikov/actnow-backend:latest
+          tags: ar4ikov/actnowbackend:latest
         
