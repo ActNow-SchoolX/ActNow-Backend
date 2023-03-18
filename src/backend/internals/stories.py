@@ -51,6 +51,7 @@ def story_create(user_id, goal_id: int, photo: str, description: str) -> Story:
     with Session(engine) as transaction:
         story = Story.create(story, transaction)
 
-        story.date_create = story.date_create.timestamp()
+        if story.date_create is not None:
+            story.date_create = story.date_create.timestamp()
 
     return story
