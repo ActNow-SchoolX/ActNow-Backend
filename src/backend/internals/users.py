@@ -13,6 +13,7 @@ FILE_FORMAT = ["image/jpg", "image/png", "image/jpeg"]
 
 
 def get_password_hash(password):
+    print(sha256_crypt.hash(password))
     return sha256_crypt.hash(password)
 
 
