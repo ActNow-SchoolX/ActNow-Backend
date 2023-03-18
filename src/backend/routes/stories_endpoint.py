@@ -21,7 +21,7 @@ async def create_goal(
     try:
         photo = check_photo(photo)
     except (TypeError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=e)
+        raise HTTPException(status_code=400, detail=str(e))
 
     filename = f'{str(uuid4())}.{photo.filename.split(".")[-1]}'
 
@@ -39,7 +39,7 @@ async def create_goal(
     try:
         description = check_description(description)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=e)
+        raise HTTPException(status_code=400, detail=str(e))
 
     story = story_create(session.user_id, goal_id, description, str(file_path))
 
