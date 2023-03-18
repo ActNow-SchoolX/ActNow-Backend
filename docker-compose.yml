@@ -2,11 +2,13 @@ version: '3.3'
 
 networks:
   actnow:
+    external:
+      name: actnow
     driver: bridge
 
 services:
   backend:
-    image: actnow-backend:latest
+    image: ar4ikov/actnow-backend:latest
     restart: always
     build:
         context: .
@@ -33,7 +35,7 @@ services:
       MYSQL_PASSWORD: 'password'
       MYSQL_ROOT_PASSWORD: 'password'
     ports:
-      - '3306:3306'
+      - '6612:3306'
     networks:
       - actnow
     volumes:
