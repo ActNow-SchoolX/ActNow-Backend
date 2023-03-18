@@ -33,5 +33,5 @@ jobs:
           token: ${{ secrets.DOCKER_TOKEN }}
           context: .
           push: true
-          tags: ar4ikov/actnow-backend:latest, ${{ github.run_number }}
+          tags: ar4ikov/actnow-backend:latest, ar4ikov/actnow-backend:build-${{ github.run_number }}
           labels: stable
