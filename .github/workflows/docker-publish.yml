@@ -27,16 +27,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
           
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: ar4ikov/actnowbackend  
-      
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags}}
+      - name: Build image
+        run: |
+          IMAGE_NAME=actnowbackend
+          docker build . --file Dockerfile --tag $IMAGE_NAME
+      - name: Push image
+        run: |
+          IMAGE_NAME=actnowbackend
+          IMAGE_ID=ar4ikov/actnowbackend
+
+          docker tag $IMAGE_NAME $IMAGE_ID:latest
+          docker push $IMAGE_ID:latest
         
