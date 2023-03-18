@@ -64,6 +64,7 @@ def goal_create(goal_data, user_id) -> Goal:
     with Session(engine) as transaction:
         goal = Goal.create(goal, transaction)
 
-        goal.deadline = goal.deadline.timestamp()
+        if goal.deadline is not None:
+            goal.deadline = goal.deadline.timestamp()
 
     return goal

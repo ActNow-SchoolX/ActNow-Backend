@@ -51,4 +51,4 @@ async def login(
 
     cookie.attach_to_response(response, session.uuid)
 
-    return {"message": "Logged in"}
+    return {"success": True}

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from src.backend.dependencies import cookie, verifier
-from src.backend.routes.goals import GoalRequest, GoalResponse, goal_create
+from src.backend.internals.goals import GoalRequest, GoalResponse, goal_create
 from src.backend.sessions import SessionData
 
 app = APIRouter()
