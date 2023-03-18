@@ -1,4 +1,5 @@
 import re
+from os import environ
 
 from passlib.hash import sha256_crypt
 from pydantic import BaseModel, validator
@@ -13,8 +14,23 @@ FILE_FORMAT = ["image/jpg", "image/png", "image/jpeg"]
 
 
 def get_password_hash(password):
-    print(sha256_crypt.hash(password))
-    return sha256_crypt.hash(password)
+    # using salt from environment variable with 1000 rounds
+    # using sha256_crypt
+    hashed_pass = sha256_crypt.using(
+        rounds=environ.get('ENCRYPT_SALT_ROUNDS'),
+        salt=environ.get('ENCRYPT_SALT')
+    ).hash(password)
+
+    print(hashed_pass)
+
+    return hashed_pass
+
+
+def verify_password(password, _hash):
+    return sha256_crypt.using(
+        rounds=environ.get('ENCRYPT_SALT_ROUNDS'),
+        salt=environ.get('ENCRYPT_SALT')
+    ).verify(password, _hash)
 
 
 def validate_photo(content_type, size):
