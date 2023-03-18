@@ -21,17 +21,12 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      - name: Build and push Docker image
+        uses: HurricanKai/Publish-Docker-Github-Action@master
         with:
+          name: ar4ikov/actnow-backend
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
+          tagging: true
           token: ${{ secrets.DOCKER_TOKEN }}
-          context: .
-          push: true
-          tags: ar4ikov/actnow-backend:latest, ar4ikov/actnow-backend:build-${{ github.run_number }}
-          labels: stable
+          tags: latest
