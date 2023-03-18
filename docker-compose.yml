@@ -8,7 +8,7 @@ networks:
 
 services:
   backend:
-    image: ar4ikov/actnow-backend:latest
+    image: ar4ikov/actnowbackend:latest
     restart: always
     build:
         context: .
