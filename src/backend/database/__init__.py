@@ -6,6 +6,11 @@ if environ.get('DATABASE_URL').startswith('mysql'):
         environ.get("DATABASE_URL"),
         echo=False,
     )
+elif environ.get('DATABASE_URL').startswith('postgresql'):
+    engine = create_engine(
+        environ.get("DATABASE_URL"),
+        echo=False,
+    )
 elif environ.get('DATABASE_URL').startswith('sqlite'):
     connect_args = {"check_same_thread": False}
     engine = create_engine(
