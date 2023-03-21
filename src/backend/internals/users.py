@@ -70,12 +70,9 @@ def user_metadata_create(user_data, user_id) -> UserMetadata:
     return new_user_metadata
 
 
-class UserRequest(BaseModel):
+class Nickname(BaseModel):
 
     nickname: str
-    password: str 
-    profile_photo: str | None = None
-    profile_description: str | None = None
 
     @validator("nickname")
     def validate_name(cls, value):   # Пройдет валидацию при наличии только лишь букв и цифр в нике, а также по длинам.
@@ -90,7 +87,12 @@ class UserRequest(BaseModel):
             )
         
         return value
-    
+
+
+class Credentials(BaseModel):
+
+    password: str
+
     @validator("password")
     def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и
         # по длинам.
@@ -108,7 +110,16 @@ class UserRequest(BaseModel):
             )
         
         return value
-    
+
+
+class Photo(BaseModel):
+    profile_photo: str | None = None
+
+
+class Description(BaseModel):
+
+    profile_description: str | None = None
+
     @validator("profile_description")
     def validate_desc(cls, value):   # Пройдет валидацию только по длине.
 
@@ -119,11 +130,63 @@ class UserRequest(BaseModel):
             )
         
         return value
+    
+
+class UserRequest(Nickname, Credentials, Photo, Description):
+
+    # nickname: str
+    # password: str 
+    # profile_photo: str | None = None
+    # profile_description: str | None = None
+
+    # @validator("nickname")
+    # def validate_name(cls, value):   # Пройдет валидацию при наличии только лишь букв и цифр в нике, а также по длинам.
+
+    #     if ((not NICKNAME_PATTERN.search(value))    # Сопоставляю с регулярным выражением
+    #         or (len(value) > 20) 
+    #         or (len(value) == 0)
+    #     ):
+
+    #         raise ValueError(
+    #             'Никнейм не соответствует условиям'
+    #         )
+        
+    #     return value
+    
+    # @validator("password")
+    # def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и
+    #     # по длинам.
+
+    #     if ((not PASSWORD_PATTERN.search(value))    # Сопоставляю с регулярным выражением
+    #         or (len(value) > 20)
+    #         or (len(value) < 8)
+    #         or (re.sub(PASSWORD_PATTERN, '', value) == '')  # Проверяю наличие букв в пароле
+    #         or (re.sub(PASSWORD_PATTERN, '', value).islower())  # Проверяю наличие заглавных букв
+    #         or (re.sub(PASSWORD_PATTERN, '', value).isupper())  # Проверяю наличие строчных букв
+    #     ):
+
+    #         raise ValueError(
+    #             'Пароль не соответствует условиям'
+    #         )
+        
+    #     return value
+    
+    # @validator("profile_description")
+    # def validate_desc(cls, value):   # Пройдет валидацию только по длине.
+
+    #     if len(value) > 127:
+
+    #         raise ValueError(
+    #             'Описание профиля не соответствует условиям'
+    #         )
+        
+    #     return value
+    ...
 
 
-class UserResponse(BaseModel):
+class UserResponse(Nickname, Photo, Description):
 
     id: int
-    nickname: str
-    profile_photo: str | None = None
-    profile_description: str | None = None
+    # nickname: str
+    # profile_photo: str | None = None
+    # profile_description: str | None = None

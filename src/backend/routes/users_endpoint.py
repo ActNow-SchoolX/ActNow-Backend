@@ -86,9 +86,9 @@ def read_user(user_id: int | None = None, nickname: str | None = None):
             )
         
 
-@app.put("/update_user", dependencies=[Depends(cookie)])
-def update_user():
-    pass 
+@app.patch("/update_user", dependencies=[Depends(cookie)])
+def update_user(updated_user: ..., session: SessionData[Depends(verifier)]):
+    pass
 
         
 
