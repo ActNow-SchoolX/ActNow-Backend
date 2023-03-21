@@ -44,6 +44,7 @@ class User(SQLModel, table=True):
     stories: List["Story"] = Relationship(back_populates="user")
     liked_stories: List["Story"] = Relationship(back_populates="liked_users", link_model=UserStoryLikes)
     user_metadata: "UserMetadata" = Relationship(back_populates="user")
+    deleted: bool = Field(default=False)
 
     @classmethod
     def get_by_nickname(cls: type[U], session: Session, nickname: str) -> U | None:
@@ -104,6 +105,18 @@ class User(SQLModel, table=True):
         :param session: session
         :return: user
         """
+        session.add(self)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def delete(self, session: Session) -> U:
+        """ Disable user
+
+        :param session: session
+        :return: user
+        """
+        self.deleted = True
         session.add(self)
         session.commit()
         session.refresh(self)
@@ -187,6 +200,7 @@ class Goal(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     user: 'User' = Relationship(back_populates="goals")
     stories: List["Story"] = Relationship(back_populates="goal")
+    deleted: bool = Field(default=False)
 
     @classmethod
     def get_by_id(cls: type[G], session: Session, _id: int) -> G | None:
@@ -238,6 +252,18 @@ class Goal(SQLModel, table=True):
         :param session: session
         :return: goal
         """
+        session.add(self)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def delete(self, session: Session) -> G:
+        """ Disable user
+
+        :param session: session
+        :return: user
+        """
+        self.deleted = True
         session.add(self)
         session.commit()
         session.refresh(self)
