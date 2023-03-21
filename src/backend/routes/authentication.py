@@ -19,7 +19,6 @@ class UserAuth(BaseModel):
     nickname = str
     password = str
 
-
 def verify_credentials(nickname: str, password: str) -> User | HTTPException:
     with Session(engine) as session:
         user = User.get_by_nickname(session, nickname)
@@ -29,6 +28,7 @@ def verify_credentials(nickname: str, password: str) -> User | HTTPException:
             return HTTPException(status_code=401, detail="Invalid username or password")
 
     return user
+
 
 
 @app.post("/login", dependencies=[Depends(cookie.get_last_cookie)])
@@ -51,4 +51,4 @@ async def login(
 
     cookie.attach_to_response(response, session.uuid)
 
-    return {"success": True}
+    return {"message": "Logged in"}
