@@ -44,6 +44,7 @@ class User(SQLModel, table=True):
     stories: List["Story"] = Relationship(back_populates="user")
     liked_stories: List["Story"] = Relationship(back_populates="liked_users", link_model=UserStoryLikes)
     user_metadata: "UserMetadata" = Relationship(back_populates="user")
+    deleted: bool = Field(default=False)
 
     @classmethod
     def get_by_nickname(cls: type[U], session: Session, nickname: str) -> U | None:
@@ -76,16 +77,39 @@ class User(SQLModel, table=True):
         """
         return session.exec(select(cls).offset(offset).limit(limit)).all()
 
-    @classmethod
-    def like_story(cls: type[U], session: Session, user_id: int, story_id: int) -> None:
+    def like_story(self, session: Session, story_id: int) -> U | None:
         """Like story
 
         :param session: session
-        :param user_id: user id
         :param story_id: story id
         """
-        session.add(UserStoryLikes(user_id=user_id, story_id=story_id))
-        session.commit()
+        story = Story.get_by_id(session, story_id)
+        if story:
+            if story not in self.liked_stories:
+                self.liked_stories.append(story)
+                session.add(self)
+                session.commit()
+                session.refresh(self)
+            return self
+
+        return None
+
+    def dislike_story(self, session: Session, story_id: int) -> U | None:
+        """Dislike story
+
+        :param session: session
+        :param story_id: story id
+        """
+        story = Story.get_by_id(session, story_id)
+        if story:
+            if story in self.liked_stories:
+                self.liked_stories.remove(story)
+                session.add(self)
+                session.commit()
+                session.refresh(self)
+            return self
+
+        return None
 
     def create(self, session: Session) -> U:
         """Create user
@@ -104,6 +128,18 @@ class User(SQLModel, table=True):
         :param session: session
         :return: user
         """
+        session.add(self)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def delete(self, session: Session) -> U:
+        """ Disable user
+
+        :param session: session
+        :return: user
+        """
+        self.deleted = True
         session.add(self)
         session.commit()
         session.refresh(self)
@@ -187,6 +223,7 @@ class Goal(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     user: 'User' = Relationship(back_populates="goals")
     stories: List["Story"] = Relationship(back_populates="goal")
+    deleted: bool = Field(default=False)
 
     @classmethod
     def get_by_id(cls: type[G], session: Session, _id: int) -> G | None:
@@ -238,6 +275,18 @@ class Goal(SQLModel, table=True):
         :param session: session
         :return: goal
         """
+        session.add(self)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def delete(self, session: Session) -> G:
+        """ Disable user
+
+        :param session: session
+        :return: user
+        """
+        self.deleted = True
         session.add(self)
         session.commit()
         session.refresh(self)
@@ -314,22 +363,40 @@ class Story(SQLModel, table=True):
         """
         return session.exec(select(cls).where(cls.goal_id == goal_id).offset(offset).limit(limit)).all()
 
-    @classmethod
-    def add_user_like(cls: type[S], session: Session, story_id: int, user_id: int) -> S | None:
+    def add_user_like(self, session: Session, user_id: int) -> S | None:
         """Add user like
 
         :param session: session
-        :param story_id: story id
         :param user_id: user id
         :return: story
         """
-        story = cls.get_by_id(session, story_id)
-        if story:
-            story.liked_users.append(User.get_by_id(session, user_id))
-            session.add(story)
-            session.commit()
-            session.refresh(story)
-            return story
+        user = User.get_by_id(session, user_id)
+        if user:
+            if user not in self.liked_users:
+                self.liked_users.append(user)
+                session.add(self)
+                session.commit()
+                session.refresh(self)
+            return self
+
+        return None
+
+    def remove_user_like(self, session: Session, user_id: int) -> S | None:
+        """Remove user like
+
+        :param session: session
+        :param user_id: user id
+        :return: story
+        """
+        user = User.get_by_id(session, user_id)
+        if user:
+            if user in self.liked_users:
+                self.liked_users.remove(user)
+                session.add(self)
+                session.commit()
+                session.refresh(self)
+            return self
+
         return None
 
     def create(self, session: Session) -> S:
