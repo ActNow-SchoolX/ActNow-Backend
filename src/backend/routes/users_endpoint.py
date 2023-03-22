@@ -2,6 +2,7 @@ from fastapi import UploadFile, APIRouter, HTTPException, Depends
 from src.backend.internals.users import (
     UserRequest,
     UserResponse,
+    UserPatch,
     get_password_hash,
     validate_photo,
     user_registrate,
@@ -14,7 +15,7 @@ from sqlmodel import Session
 from src.backend.database import engine
 from src.backend.dependencies import cookie, verifier
 from src.backend.sessions import SessionData
-from src.backend.database.orm import User
+from src.backend.database.orm import User, UserMetadata
 
 app = APIRouter()
 
@@ -86,9 +87,33 @@ def read_user(user_id: int | None = None, nickname: str | None = None):
             )
         
 
-@app.patch("/update_user", dependencies=[Depends(cookie)])
-def update_user(updated_user: ..., session: SessionData[Depends(verifier)]):
-    pass
+@app.patch("/update_user", dependencies=[Depends(cookie)], status_code=201, response_model=UserPatch)
+def update_user(update: UserPatch, session: SessionData = Depends(verifier)):
+
+    with Session(engine) as transaction:
+
+        updated_user = User.get_by_id(transaction, session.user_id)
+        updated_metadata = UserMetadata.get_by_user_id(transaction, session.user_id)
+
+        updated_user.nickname = update.nickname
+
+        updated_metadata.description = update.profile_description
+        updated_metadata.photo = update.profile_photo
+
+        User.update(updated_user, transaction)
+        UserMetadata.update(updated_metadata, transaction)
+
+        return update
+    
+
+@app.delete("/delete_user", dependencies=[Depends(cookie)])
+def delete_user(session: SessionData = Depends(verifier)):
+
+    with Session(engine) as transaction:
+
+        current_user = User.get_by_id(transaction, session.user_id)
+
+        User.delete(current_user, transaction)
 
         
 
