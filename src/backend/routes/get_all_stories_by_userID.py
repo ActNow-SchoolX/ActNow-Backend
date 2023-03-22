@@ -1,29 +1,23 @@
-from __future__ import annotations
-from pydantic import BaseModel, validator
-from sqlmodel import Session, SQLModel
+from fastapi import APIRouter, Depends
+
+from src.backend.dependencies import cookie, verifier
+from src.backend.sessions import SessionData
 from src.backend.database.orm import Story
+
+from sqlmodel import Session
 from src.backend.database import engine
 
-
-class StoryRequest(BaseModel):
-    id: int
-    user_id: int
-    goal_id: int
-    deleted: bool
-
-    @validator('deleted')
-    def check_del(cls, deleted):
-        if deleted == 0:
-            raise ValueError('Story not found')
-        return
+app = APIRouter()
 
 
-def get_all_stories_by_userID(story_data) -> Story:
-    story = Story(
-        id=story_data.id,
-        user_id=story_data.user_id,
-        goal_id=story_data.goal_id
-    )
+@app.get("/get_story")
+def get_by_user_id():
+    pass
 
+
+@app.get("/get_story", dependencies=[Depends(cookie)])
+def get_story_by_id(user_id: int, session: SessionData = Depends(verifier)) -> Story:
     with Session(engine) as transaction:
-        Story.get_all(story, transaction)
+        story = Story.get_by_user_id(transaction, user_id)
+
+    return story

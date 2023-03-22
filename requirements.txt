@@ -25,3 +25,4 @@ pathlib~=1.0.1
 itsdangerous~=2.0.1
 pydantic~=1.10.6
 sqlmodel~=0.0.8
+fastapi~=0.95.0
