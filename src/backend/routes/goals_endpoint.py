@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from src.backend.dependencies import cookie, verifier
 from src.backend.internals.goals import GoalRequest, GoalResponse, goal_create
@@ -19,10 +19,15 @@ async def create_goal(item: GoalRequest, session: SessionData = Depends(verifier
     return new_goal
 
 
-@app.get("/get_goal/{goal.id}", dependencies=[Depends(cookie)])
+@app.get("/get_goal/{goal_id}", dependencies=[Depends(cookie)])
 def get_goal_by_id(goal_id: int) -> Goal:
 
     with Session(engine) as transaction:
         goal = Goal.get_by_id(transaction, goal_id)
 
-    return goal
+    if goal is None:
+        raise HTTPException (
+            status_code=400
+        )
+    else:
+        return goal

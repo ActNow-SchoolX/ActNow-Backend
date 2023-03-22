@@ -9,7 +9,6 @@ from src.backend.routes import (
     users_endpoint,
     goals_endpoint,
     deauthentication,
-    get_goals,
 )
 
 app = FastAPI()
@@ -43,8 +42,4 @@ app.include_router(
 app.include_router(
     stories_endpoint.app,
     tags=["Story"]
-)
-app.include_router(
-    get_goals.app,
-    tags=["Get_goals"]
 )
