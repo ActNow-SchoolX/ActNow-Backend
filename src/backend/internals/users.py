@@ -7,6 +7,7 @@ from sqlmodel import Session
 
 from src.backend.database import engine
 from src.backend.database.orm import User, UserMetadata
+from src.backend.routes.nickname_validation import validate_nickname
 
 NICKNAME_PATTERN = re.compile(r"^[a-zA-Z0-9]+$")
 PASSWORD_PATTERN = re.compile(r"[0-9]")
@@ -148,3 +149,4 @@ class UserResponse(Nickname, Photo, Description):
 class UserPatch(Nickname, Metadata):
 
     nickname: str | None = None
+
