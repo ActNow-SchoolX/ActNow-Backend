@@ -3,7 +3,7 @@ from os import environ
 
 from passlib.hash import sha256_crypt
 from pydantic import BaseModel, validator
-from sqlmodel import Session
+from sqlmodel import Session, Field
 
 from src.backend.database import engine
 from src.backend.database.orm import User, UserMetadata
@@ -114,7 +114,7 @@ class Credentials(BaseModel):
 
 
 class Photo(BaseModel):
-    profile_photo: str | None = None
+    profile_photo: str | None = Field(default=None)
 
 
 class Description(BaseModel):
@@ -133,20 +133,18 @@ class Description(BaseModel):
         return value
     
 
-class Metadata(Description, Photo):
-    ...
-    
-
-class UserRequest(Nickname, Credentials, Photo, Description):
+class Metadata(Photo, Description):
     ...
 
 
-class UserResponse(Nickname, Photo, Description):
+class UserRequest(Metadata, Nickname, Credentials):
+    ...
 
+
+class UserResponse(Metadata, Nickname):
     id: int
 
 
 class UserPatch(Nickname, Metadata):
-
     nickname: str | None = None
 

@@ -16,11 +16,12 @@ from src.backend.database import engine
 from src.backend.dependencies import cookie, verifier
 from src.backend.sessions import SessionData
 from src.backend.database.orm import User, UserMetadata
+from src.backend.routes.nickname_validation import validate_nickname
 
 app = APIRouter()
 
 
-@app.post('/users', response_model=UserResponse)
+@app.post('/users', response_model=UserResponse, status_code=201)
 def post_user(item: UserRequest):
 
     item.password = get_password_hash(item.password)
@@ -60,50 +61,68 @@ def post_user(file: UploadFile | None = None):
     return str(file_path)
 
 
-@app.get("/get_user", dependencies=[Depends(cookie)])
+@app.get("/get_user/{user_id}", dependencies=[Depends(cookie)])
 def read_user(user_id: int | None = None, nickname: str | None = None):
 
     with Session(engine) as transaction:
         if user_id != None and nickname != None:
 
             raise HTTPException(
-                "Необходимо передать только один параметр: айди пользователя или его никнейм"
+                status_code=400,
+                detail="Необходимо передать только один параметр: айди пользователя или его никнейм"
             )
         
         elif user_id != None and nickname == None:
 
             user = User.get_by_id(transaction, user_id)
-            return user
+            if user is not None and user.deleted is not True:
+                return user
+            else: 
+                raise HTTPException(status_code=404)
         
         elif user_id == None and nickname != None:
 
             user = User.get_by_nickname(transaction, nickname)
-            return user
+            if user is not None and user.deleted is not True:
+                return user
+            else: 
+                raise HTTPException(status_code=404)
         
         else:
 
             raise HTTPException (
-                "Необходимо передать айди или никнейм"
+                status_code=400,
+                detail="Необходимо передать айди или никнейм"
             )
         
 
-@app.patch("/update_user", dependencies=[Depends(cookie)], status_code=201, response_model=UserPatch)
-def update_user(update: UserPatch, session: SessionData = Depends(verifier)):
+@app.patch("/update_user/me", dependencies=[Depends(cookie)], status_code=201, response_model=UserPatch)
+def update_user(update_data: UserPatch, session: SessionData = Depends(verifier)):
 
     with Session(engine) as transaction:
 
         updated_user = User.get_by_id(transaction, session.user_id)
         updated_metadata = UserMetadata.get_by_user_id(transaction, session.user_id)
 
-        updated_user.nickname = update.nickname
+        if validate_nickname(update_data.nickname) is not True:
+            raise HTTPException(
+                status_code=400,
+                detail='Никнейм занят'
+            )
 
-        updated_metadata.description = update.profile_description
-        updated_metadata.photo = update.profile_photo
+        updated_data = update_data.dict(exclude_unset=True)
+        
+        if update_data.nickname is not None:
+            updated_user.nickname = update_data.nickname
+        if update_data.profile_photo is not None:
+            updated_metadata.photo = update_data.profile_photo
+        if update_data.profile_description is not None:
+            updated_metadata.description = update_data.profile_description
 
         User.update(updated_user, transaction)
         UserMetadata.update(updated_metadata, transaction)
 
-        return update
+        return updated_data
     
 
 @app.delete("/delete_user", dependencies=[Depends(cookie)])
@@ -112,8 +131,11 @@ def delete_user(session: SessionData = Depends(verifier)):
     with Session(engine) as transaction:
 
         current_user = User.get_by_id(transaction, session.user_id)
-
-        User.delete(current_user, transaction)
+        
+        if current_user.deleted is not True:
+            User.delete(current_user, transaction)
+        else:
+            raise HTTPException(status_code=404)
 
         
 
