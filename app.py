@@ -8,7 +8,8 @@ from src.backend.routes import (
     stories_endpoint,
     users_endpoint,
     goals_endpoint,
-    deauthentication
+    deauthentication,
+    update_story
 )
 
 app = FastAPI()
@@ -41,5 +42,9 @@ app.include_router(
 )
 app.include_router(
     stories_endpoint.app,
+    tags=["Story"]
+)
+app.include_router(
+    update_story.app,
     tags=["Story"]
 )
