@@ -432,3 +432,4 @@ class Story(SQLModel, table=True):
         session.commit()
         session.refresh(self)
         return self
+
