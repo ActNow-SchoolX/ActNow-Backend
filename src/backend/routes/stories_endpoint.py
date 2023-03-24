@@ -54,3 +54,13 @@ async def get_story(story):
         )
     else:
         return story
+
+
+@app.delete("story_delete/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
+async def story_delete(story):
+    if story is not None:
+        story.delete = True
+    else:
+        raise HTTPException(
+            status_code=404
+        )
