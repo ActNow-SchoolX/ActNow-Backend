@@ -36,7 +36,7 @@ def post_user(item: UserRequest):
 
 
 @app.post('/upload_file')
-def post_user(file: UploadFile | None = None):
+def post_photo(file: UploadFile | None = None):
     if validate_photo(file.content_type, file.size):
         ...
     else:
