@@ -62,38 +62,41 @@ def post_user(file: UploadFile | None = None):
 
 
 @app.get("/get_user/{user_id}", dependencies=[Depends(cookie)])
-def read_user(user_id: int | None = None, nickname: str | None = None):
+def read_user(user_id: int):
 
     with Session(engine) as transaction:
-        if user_id != None and nickname != None:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Необходимо передать только один параметр: айди пользователя или его никнейм"
-            )
-        
-        elif user_id != None and nickname == None:
-
+            
             user = User.get_by_id(transaction, user_id)
+            user_metadata = UserMetadata.get_by_user_id(transaction, user_id)
+
             if user is not None and user.deleted is not True:
-                return user
+
+               return UserResponse(nickname=user.nickname,
+                                    profile_description=user_metadata.description,
+                                    id=user.id,
+                                    profile_photo=user_metadata.photo)
+            
             else: 
                 raise HTTPException(status_code=404)
-        
-        elif user_id == None and nickname != None:
 
+
+@app.get("/get_user_by_nickname/{nickname}", dependencies=[Depends(cookie)])
+def read_user(nickname: str):
+
+    with Session(engine) as transaction:
+            
             user = User.get_by_nickname(transaction, nickname)
+            user_metadata = UserMetadata.get_by_user_id(transaction, user.id)
+
             if user is not None and user.deleted is not True:
-                return user
+
+                return UserResponse(nickname=user.nickname,
+                                    profile_description=user_metadata.description,
+                                    id=user.id,
+                                    profile_photo=user_metadata.photo)
+            
             else: 
                 raise HTTPException(status_code=404)
-        
-        else:
-
-            raise HTTPException (
-                status_code=400,
-                detail="Необходимо передать айди или никнейм"
-            )
         
 
 @app.patch("/update_user/me", dependencies=[Depends(cookie)], status_code=201, response_model=UserPatch)
@@ -125,7 +128,7 @@ def update_user(update_data: UserPatch, session: SessionData = Depends(verifier)
         return updated_data
     
 
-@app.delete("/delete_user", dependencies=[Depends(cookie)])
+@app.delete("/delete_user", dependencies=[Depends(cookie)], status_code=204)
 def delete_user(session: SessionData = Depends(verifier)):
 
     with Session(engine) as transaction:
