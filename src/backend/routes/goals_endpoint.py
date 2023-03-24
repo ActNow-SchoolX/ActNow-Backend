@@ -25,9 +25,9 @@ def get_goal_by_id(goal_id: int) -> Goal:
     with Session(engine) as transaction:
         goal = Goal.get_by_id(transaction, goal_id)
 
-    if goal is None:
+    if goal is None or goal.deleted is True:
         raise HTTPException (
-            status_code=400
+            status_code=404
         )
     else:
         return goal
