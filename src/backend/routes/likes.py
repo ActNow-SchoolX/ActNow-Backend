@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from src.backend.database import get_db
+from sqlmodel import Session
+from src.backend.database import get_session
 from src.backend.sessions import FastAPISession
 from src.backend.internals import add_like, remove_like, get_like_status
 
@@ -12,7 +12,7 @@ router = APIRouter()
 async def like_item(
         item_id: int,
         session: FastAPISession = Depends(),
-        db: Session = Depends(get_db),
+        db: Session = Depends(get_session),
 ):
     user_id = session.get("user_id")
     if not user_id:
@@ -36,7 +36,7 @@ async def like_item(
 async def unlike_item(
         item_id: int,
         session: FastAPISession = Depends(),
-        db: Session = Depends(get_db),
+        db: Session = Depends(get_session),
 ):
     user_id = session.get("user_id")
     if not user_id:
