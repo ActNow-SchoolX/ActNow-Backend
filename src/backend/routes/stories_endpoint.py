@@ -2,7 +2,10 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from sqlmodel import Session
 
+from src.backend.database import engine
+from src.backend.database.orm import Story
 from src.backend.dependencies import cookie, verifier
 from src.backend.internals.stories import story_create, StoryResponse, check_photo, validate_goal_exists, \
     check_description
@@ -46,10 +49,12 @@ async def create_goal(
     return story
 
 
-@app.get("/story_get/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
-async def get_story(story):
+@app.get("/story/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
+async def get_story(story_id, session: SessionData = Depends(verifier)):
+    with Session(engine) as transaction:
+        story = Story.get_by_id(transaction, story_id)
+
     if story is None or story.deleted is True:
-        raise HTTPException(
-            status_code=404, detail="Story not found")
-    else:
-        return story
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    return story
