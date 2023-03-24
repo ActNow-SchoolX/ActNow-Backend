@@ -62,5 +62,5 @@ async def story_delete(story):
         story.delete = True
     else:
         raise HTTPException(
-            status_code=404
+            status_code=404, detail="Story not found"
         )
