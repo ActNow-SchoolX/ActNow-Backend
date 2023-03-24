@@ -46,7 +46,7 @@ async def create_goal(
     return story
 
 
-@app.get("./story,", response_model=StoryResponse, dependencies=[Depends(cookie)])
+@app.get("./story/{story_id},", response_model=StoryResponse, dependencies=[Depends(cookie)])
 async def get_story(story):
     if story is None or story.deleted is True:
         raise HTTPException(
