@@ -44,3 +44,13 @@ async def create_goal(
     story = story_create(session.user_id, goal_id, description, str(file_path))
 
     return story
+
+
+@app.get("./story,", response_model=StoryResponse, dependencies=[Depends(cookie)])
+async def get_story(story):
+    if story is None or story.deleted is True:
+        raise HTTPException(
+            status_code=404
+        )
+    else:
+        return story
