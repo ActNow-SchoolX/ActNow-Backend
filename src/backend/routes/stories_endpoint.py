@@ -2,10 +2,18 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from sqlmodel import Session
 
+from src.backend.database import engine
+from src.backend.database.orm import Story
 from src.backend.dependencies import cookie, verifier
-from src.backend.internals.stories import story_create, StoryResponse, check_photo, validate_goal_exists, \
+from src.backend.internals.stories import (
+    story_create,
+    StoryResponse,
+    check_photo,
+    validate_goal_exists,
     check_description
+)
 from src.backend.sessions import SessionData
 
 app = APIRouter()
@@ -55,11 +63,20 @@ async def get_story(story):
         return story
 
 
-@app.delete("story_delete/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
-async def story_delete(story):
-    if story is not None:
-        story.delete = True
-        return {"message": "Story deleted"}
-    else:
-        raise HTTPException(
-            status_code=404, detail="Story not found")
+@app.delete("/story/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
+async def story_delete(story_id: int, session: SessionData = Depends(verifier)):
+    with Session(engine) as transaction:
+        story = Story.get_by_id(transaction, story_id)
+
+        if story is None:
+            raise HTTPException(status_code=404, detail="Story not found")
+
+        if story.deleted:
+            raise HTTPException(status_code=404, detail="Story not found")
+
+        if story.user_id != session.user_id:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        story.delete(transaction)
+
+        return story
