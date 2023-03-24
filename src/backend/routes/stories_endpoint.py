@@ -59,6 +59,7 @@ async def get_story(story):
 async def story_delete(story):
     if story is not None:
         story.delete = True
+        return {"message": "Story deleted"}
     else:
         raise HTTPException(
             status_code=404, detail="Story not found")
