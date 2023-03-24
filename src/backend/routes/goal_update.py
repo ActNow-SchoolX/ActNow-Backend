@@ -6,7 +6,6 @@ from pydantic import BaseModel, validator
 from src.backend.database import engine
 from src.backend.database.orm import Goal
 
-
 app = APIRouter()
 
 
@@ -30,7 +29,7 @@ class GoalResponse(BaseModel):
     title: str
     description: str
     price: float
-    deadline: float  | None
+    deadline: float | None
 
 
 def goal_update(goal_data, user_id) -> Goal:
