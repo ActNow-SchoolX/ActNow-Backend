@@ -23,7 +23,6 @@ app = APIRouter()
 
 @app.post('/users', response_model=UserResponse, status_code=201)
 def post_user(item: UserRequest):
-
     item.password = get_password_hash(item.password)
 
     new_user = user_registrate(item)
@@ -38,7 +37,6 @@ def post_user(item: UserRequest):
 
 @app.post('/upload_file')
 def post_user(file: UploadFile | None = None):
-
     if validate_photo(file.content_type, file.size):
         ...
     else:
@@ -47,7 +45,7 @@ def post_user(file: UploadFile | None = None):
             status_code=400,
             detail='Загружаемый файл не соответствует условиям'
         )
-    
+
     filename = f'{str(uuid4())}.{file.filename.split(".")[-1]}'
 
     upload_dir = Path(__file__).parent.parent.parent.parent / "uploads"
@@ -61,47 +59,40 @@ def post_user(file: UploadFile | None = None):
     return str(file_path)
 
 
-@app.get("/get_user/{user_id}", dependencies=[Depends(cookie)])
-def read_user(user_id: int):
-
+@app.get("/user/{user_id}", dependencies=[Depends(cookie)])
+def read_user_id(user_id: int):
     with Session(engine) as transaction:
-            
-            user = User.get_by_id(transaction, user_id)
-            user_metadata = UserMetadata.get_by_user_id(transaction, user_id)
+        user = User.get_by_id(transaction, user_id)
+        user_metadata = UserMetadata.get_by_user_id(transaction, user_id)
 
-            if user is not None and user.deleted is not True:
+        if user is not None and user.deleted is not True:
 
-               return UserResponse(nickname=user.nickname,
-                                    profile_description=user_metadata.description,
-                                    id=user.id,
-                                    profile_photo=user_metadata.photo)
-            
-            else: 
-                raise HTTPException(status_code=404)
+            return UserResponse(nickname=user.nickname,
+                                profile_description=user_metadata.description,
+                                id=user.id,
+                                profile_photo=user_metadata.photo)
+
+        raise HTTPException(status_code=404)
 
 
-@app.get("/get_user_by_nickname/{nickname}", dependencies=[Depends(cookie)])
-def read_user(nickname: str):
-
+@app.get("/user/{nickname}", dependencies=[Depends(cookie)])
+def read_user_nickname(nickname: str):
     with Session(engine) as transaction:
-            
-            user = User.get_by_nickname(transaction, nickname)
-            user_metadata = UserMetadata.get_by_user_id(transaction, user.id)
+        user = User.get_by_nickname(transaction, nickname)
+        user_metadata = UserMetadata.get_by_user_id(transaction, user.id)
 
-            if user is not None and user.deleted is not True:
+        if user is not None and user.deleted is not True:
 
-                return UserResponse(nickname=user.nickname,
-                                    profile_description=user_metadata.description,
-                                    id=user.id,
-                                    profile_photo=user_metadata.photo)
-            
-            else: 
-                raise HTTPException(status_code=404)
-        
+            return UserResponse(nickname=user.nickname,
+                                profile_description=user_metadata.description,
+                                id=user.id,
+                                profile_photo=user_metadata.photo)
 
-@app.patch("/update_user/me", dependencies=[Depends(cookie)], status_code=201, response_model=UserPatch)
+        raise HTTPException(status_code=404)
+
+
+@app.patch("/user", dependencies=[Depends(cookie)], status_code=200, response_model=UserPatch)
 def update_user(update_data: UserPatch, session: SessionData = Depends(verifier)):
-
     with Session(engine) as transaction:
 
         updated_user = User.get_by_id(transaction, session.user_id)
@@ -113,8 +104,6 @@ def update_user(update_data: UserPatch, session: SessionData = Depends(verifier)
                 detail='Никнейм занят'
             )
 
-        updated_data = update_data.dict(exclude_unset=True)
-        
         if update_data.nickname is not None:
             updated_user.nickname = update_data.nickname
         if update_data.profile_photo is not None:
@@ -122,25 +111,18 @@ def update_user(update_data: UserPatch, session: SessionData = Depends(verifier)
         if update_data.profile_description is not None:
             updated_metadata.description = update_data.profile_description
 
-        User.update(updated_user, transaction)
-        UserMetadata.update(updated_metadata, transaction)
+        updated_user.update(transaction)
+        updated_metadata.update(transaction)
 
-        return updated_data
-    
+        return update_data
 
-@app.delete("/delete_user", dependencies=[Depends(cookie)], status_code=204)
+
+@app.delete("/user", dependencies=[Depends(cookie)], status_code=204)
 def delete_user(session: SessionData = Depends(verifier)):
-
     with Session(engine) as transaction:
-
         current_user = User.get_by_id(transaction, session.user_id)
-        
+
         if current_user.deleted is not True:
-            User.delete(current_user, transaction)
+            current_user.delete(transaction)
         else:
             raise HTTPException(status_code=404)
-
-        
-
-
-    
