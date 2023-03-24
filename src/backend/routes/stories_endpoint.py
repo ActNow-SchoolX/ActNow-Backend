@@ -50,7 +50,6 @@ async def create_goal(
 async def get_story(story):
     if story is None or story.deleted is True:
         raise HTTPException(
-            status_code=404
-        )
+            status_code=404, detail="Story not found")
     else:
         return story
