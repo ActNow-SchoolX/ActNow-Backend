@@ -3,8 +3,9 @@ from sqlmodel import Session
 
 from src.backend.database import engine
 from src.backend.database.orm import Story
-from src.backend.dependencies import cookie
+from src.backend.dependencies import cookie, verifier
 from src.backend.internals.stories import StoryResponse, check_description
+from src.backend.sessions import SessionData
 
 app = APIRouter()
 
@@ -17,17 +18,16 @@ def validate_story_exists(story_id):
 
 
 @app.patch('/story', response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=201)
-def update_story(story_id: int, description: str):
-    if validate_story_exists(story_id):
-        with Session(engine) as session:
-            story = Story.get_by_id(session, story_id)
-            if check_description(description):
-                story.summary = description
-                session.add(story)
-                session.commit()
-                session.refresh(story)
-            else:
-                raise HTTPException(status_code=400, detail='Описание истории превышает возможное количество символов')
-    else:
+def update_story(story_id: int, description: str, session: SessionData = Depends(verifier)):
+    if not validate_story_exists(story_id):
         raise HTTPException(status_code=400, detail='История не найдена')
+
+    with Session(engine) as transaction:
+        story = Story.get_by_id(transaction, story_id)
+        if not check_description(description):
+            raise HTTPException(status_code=400, detail='Описание истории превышает возможное количество символов')
+
+        story.summary = description
+        story.update(transaction)
+
     return story
