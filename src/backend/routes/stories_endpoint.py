@@ -54,7 +54,10 @@ async def get_story(story_id, session: SessionData = Depends(verifier)):
     with Session(engine) as transaction:
         story = Story.get_by_id(transaction, story_id)
 
-    if story is None or story.deleted is True:
+    if story is None:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    if story.deleted:
         raise HTTPException(status_code=404, detail="Story not found")
 
     return story
