@@ -20,7 +20,7 @@ app = APIRouter()
 
 
 @app.post('/story', response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=201)
-async def create_goal(
+async def create_story(
         goal_id: int,
         description: str,
         photo: UploadFile = File(...),
