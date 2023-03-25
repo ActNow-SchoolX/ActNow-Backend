@@ -34,8 +34,8 @@ def post_user(item: UserRequest):
 
     return UserResponse(id=new_user.id,
                         nickname=new_user.nickname,
-                        profile_photo=new_user_metadata.photo,
-                        profile_description=new_user_metadata.description)
+                        photo=new_user_metadata.photo,
+                        description=new_user_metadata.description)
 
 
 @app.post('/user/upload_file')
@@ -60,6 +60,25 @@ def post_photo(file: UploadFile | None = None):
         file_object.write(file.file.read())
 
     return str(file_path)
+
+
+@app.get('/user/me', response_model=UserResponse, dependencies=[Depends(cookie)])
+def get_user_me(session: SessionData = Depends(verifier)):
+    with Session(engine) as transaction:
+        user = User.get_by_id(transaction, session.user_id)
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User with specified id is not found.")
+
+    if user.deleted:
+        raise HTTPException(status_code=404, detail="User with specified id is not found.")
+
+    metadata = UserMetadata.get_by_user_id(transaction, user.id)
+
+    return UserResponse(id=user.id,
+                        nickname=user.nickname,
+                        photo=metadata.photo,
+                        description=metadata.description)
 
 
 @app.get('/user', dependencies=[Depends(cookie)], response_model=UserResponse)
