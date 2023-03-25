@@ -3,10 +3,11 @@ from os import environ
 
 from passlib.hash import sha256_crypt
 from pydantic import BaseModel, validator
-from sqlmodel import Session
+from sqlmodel import Session, Field
 
 from src.backend.database import engine
 from src.backend.database.orm import User, UserMetadata
+from src.backend.routes.nickname_validation import validate_nickname
 
 NICKNAME_PATTERN = re.compile(r"^[a-zA-Z0-9]+$")
 PASSWORD_PATTERN = re.compile(r"[0-9]")
@@ -70,12 +71,9 @@ def user_metadata_create(user_data, user_id) -> UserMetadata:
     return new_user_metadata
 
 
-class UserRequest(BaseModel):
+class Nickname(BaseModel):
 
     nickname: str
-    password: str 
-    profile_photo: str | None = None
-    profile_description: str | None = None
 
     @validator("nickname")
     def validate_name(cls, value):   # Пройдет валидацию при наличии только лишь букв и цифр в нике, а также по длинам.
@@ -90,7 +88,12 @@ class UserRequest(BaseModel):
             )
         
         return value
-    
+
+
+class Credentials(BaseModel):
+
+    password: str
+
     @validator("password")
     def validate_password(cls, value):   # Пройдет валидацию только при наличии цифр, двух букв в разном регистре и
         # по длинам.
@@ -108,7 +111,16 @@ class UserRequest(BaseModel):
             )
         
         return value
-    
+
+
+class Photo(BaseModel):
+    profile_photo: str | None = Field(default=None)
+
+
+class Description(BaseModel):
+
+    profile_description: str | None = None
+
     @validator("profile_description")
     def validate_desc(cls, value):   # Пройдет валидацию только по длине.
 
@@ -119,11 +131,20 @@ class UserRequest(BaseModel):
             )
         
         return value
+    
+
+class Metadata(Photo, Description):
+    ...
 
 
-class UserResponse(BaseModel):
+class UserRequest(Metadata, Nickname, Credentials):
+    ...
 
+
+class UserResponse(Metadata, Nickname):
     id: int
-    nickname: str
-    profile_photo: str | None = None
-    profile_description: str | None = None
+
+
+class UserPatch(Nickname, Metadata):
+    nickname: str | None = None
+
