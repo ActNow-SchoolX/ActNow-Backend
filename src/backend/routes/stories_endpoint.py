@@ -50,7 +50,7 @@ async def create_story(
 
 
 @app.get("/story/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
-async def get_story(story_id, session: SessionData = Depends(verifier)):
+async def get_story(story_id, _: SessionData = Depends(verifier)):
     with Session(engine) as transaction:
         story = Story.get_by_id(transaction, story_id)
 
@@ -59,5 +59,7 @@ async def get_story(story_id, session: SessionData = Depends(verifier)):
 
     if story.deleted:
         raise HTTPException(status_code=404, detail="Story not found")
+
+    story.date_create = story.date_create.timestamp()
 
     return story

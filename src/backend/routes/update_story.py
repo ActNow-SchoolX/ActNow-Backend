@@ -12,9 +12,13 @@ app = APIRouter()
 
 def validate_story_exists(story_id):
     with Session(engine) as transaction:
-        if Story.get_by_id(transaction, story_id) is not None:
-            return True
-        return False
+        if Story.get_by_id(transaction, story_id) is None:
+            return False
+
+        if Story.get_by_id(transaction, story_id).deleted:
+            return False
+
+        return True
 
 
 @app.patch('/story', response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=201)
@@ -29,5 +33,7 @@ def update_story(story_id: int, description: str, session: SessionData = Depends
 
         story.summary = description
         story.update(transaction)
+
+        story.date_create = story.date_create.timestamp()
 
     return story

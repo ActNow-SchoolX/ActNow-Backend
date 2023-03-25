@@ -48,7 +48,7 @@ class GoalResponse(BaseModel):
     user_id: int
     title: str
     description: str
-    price: float
+    price: float | None
     deadline: float | None
 
 

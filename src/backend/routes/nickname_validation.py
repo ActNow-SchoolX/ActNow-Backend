@@ -26,7 +26,7 @@ def validate_nickname(requested_nickname: str):
     return False
 
 
-@app.post("/validate_nickname", dependencies=[Depends(cookie)])
+@app.post("/user/validate_nickname", dependencies=[Depends(cookie)])
 def get_nickname(request: Nicknames, _: SessionData = Depends(verifier)):
     if validate_nickname(request.nickname):
         return JSONResponse(

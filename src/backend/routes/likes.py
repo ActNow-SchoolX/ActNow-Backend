@@ -50,7 +50,7 @@ async def dislike_story(
             raise HTTPException(status_code=404, detail="Story not found.")
 
         if story not in user.liked_stories:
-            raise HTTPException(status_code=409, detail="Story already liked.")
+            raise HTTPException(status_code=409, detail="Story already disliked.")
 
         user.dislike_story(transaction, story_id)
 

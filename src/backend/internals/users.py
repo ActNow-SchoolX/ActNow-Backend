@@ -1,5 +1,6 @@
 import re
 from os import environ
+from typing import List
 
 from passlib.hash import sha256_crypt
 from pydantic import BaseModel, validator
@@ -73,15 +74,11 @@ def user_metadata_create(user_data, user_id) -> UserMetadata:
 
 class Nickname(BaseModel):
 
-    nickname: str
+    nickname: str | None = Field(None, max_length=20, min_length=3)
 
     @validator("nickname")
     def validate_name(cls, value):   # Пройдет валидацию при наличии только лишь букв и цифр в нике, а также по длинам.
-
-        if ((not NICKNAME_PATTERN.search(value))    # Сопоставляю с регулярным выражением
-            or (len(value) > 20) 
-            or (len(value) == 0)
-        ):
+        if not NICKNAME_PATTERN.search(value):   # Сопоставляю с регулярным выражением
 
             raise ValueError(
                 'Никнейм не соответствует условиям'
@@ -114,14 +111,13 @@ class Credentials(BaseModel):
 
 
 class Photo(BaseModel):
-    profile_photo: str | None = Field(default=None)
+    photo: str | None = Field(default=None)
 
 
 class Description(BaseModel):
+    description: str | None = None
 
-    profile_description: str | None = None
-
-    @validator("profile_description")
+    @validator("description")
     def validate_desc(cls, value):   # Пройдет валидацию только по длине.
 
         if len(value) > 127:
@@ -145,6 +141,11 @@ class UserResponse(Metadata, Nickname):
     id: int
 
 
-class UserPatch(Nickname, Metadata):
+class UserPatchRequest(Nickname):
     nickname: str | None = None
+    user_metadata: Metadata
 
+
+class UserPatchResponse(Nickname):
+    nickname: str | None = None
+    user_metadata: List[Metadata]
