@@ -62,8 +62,8 @@ def user_metadata_create(user_data, user_id) -> UserMetadata:
 
     new_user_metadata = UserMetadata(
         user_id=user_id,
-        description=user_data.profile_description,
-        photo=user_data.profile_photo,
+        description=user_data.description,
+        photo=user_data.photo,
     )
 
     with Session(engine) as session:
