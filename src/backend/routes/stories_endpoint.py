@@ -54,13 +54,18 @@ async def create_goal(
     return story
 
 
-@app.get("/story_get/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
-async def get_story(story):
-    if story is None or story.deleted is True:
-        raise HTTPException(
-            status_code=404, detail="Story not found")
-    else:
-        return story
+@app.get("/story/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
+async def get_story(story_id, session: SessionData = Depends(verifier)):
+    with Session(engine) as transaction:
+        story = Story.get_by_id(transaction, story_id)
+
+    if story is None:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    if story.deleted:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    return story
 
 
 @app.delete("/story/{story_id}", response_model=StoryResponse, dependencies=[Depends(cookie)], status_code=200)
