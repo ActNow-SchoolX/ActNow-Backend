@@ -12,7 +12,7 @@ from src.backend.internals.stories import (
     StoryResponse,
     check_photo,
     validate_goal_exists,
-    check_description
+    check_description,
 )
 from src.backend.sessions import SessionData
 
@@ -59,7 +59,7 @@ async def get_story(story_id, session: SessionData = Depends(verifier)):
     with Session(engine) as transaction:
         story = Story.get_by_id(transaction, story_id)
 
-    if story is None:
+    if not story:
         raise HTTPException(status_code=404, detail="Story not found")
 
     if story.deleted:
@@ -73,7 +73,7 @@ async def story_delete(story_id: int, session: SessionData = Depends(verifier)):
     with Session(engine) as transaction:
         story = Story.get_by_id(transaction, story_id)
 
-        if story is None:
+        if not story:
             raise HTTPException(status_code=404, detail="Story not found")
 
         if story.deleted:
