@@ -85,3 +85,4 @@ async def story_delete(story_id: int, session: SessionData = Depends(verifier)):
         story.delete(transaction)
 
         return story
+
