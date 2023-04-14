@@ -26,6 +26,16 @@ class UserStoryLikes(SQLModel, table=True):
     story_id: int | None = Field(foreign_key="story.id", primary_key=True)
 
 
+class UserGoalFavorite(SQLModel, table=True):
+    """UserGoalFavorite model
+
+    :param user_id: user id
+    :param goal_id: story id
+    """
+    user_id: int | None = Field(foreign_key="user.id", primary_key=True)
+    goal_id: int | None = Field(foreign_key="goal.id", primary_key=True)
+
+
 # class user with id, nickname, password and relationship for UserMetadata
 class User(SQLModel, table=True):
     """User model
@@ -45,6 +55,7 @@ class User(SQLModel, table=True):
     liked_stories: List["Story"] = Relationship(back_populates="liked_users", link_model=UserStoryLikes)
     user_metadata: "UserMetadata" = Relationship(back_populates="user")
     deleted: bool = Field(default=False)
+    goal_favorites: List["Goal"] = Relationship(back_populates="users_favorite", link_model=UserGoalFavorite)
 
     @classmethod
     def get_by_nickname(cls: type[U], session: Session, nickname: str) -> U | None:
@@ -76,6 +87,40 @@ class User(SQLModel, table=True):
         :return: users
         """
         return session.exec(select(cls).offset(offset).limit(limit)).all()
+
+    def add_favorite_goal(self, session: Session, goal_id: int) -> U | None:
+        """Add goal to favorites
+
+        :param session: session
+        :param goal_id: goal id
+        """
+        goal = Goal.get_by_id(session, goal_id)
+        if goal:
+            if goal not in self.goal_favorites:
+                self.goal_favorites.append(goal)
+                session.add(self)
+                session.commit()
+                session.refresh(self)
+            return self
+
+        return None
+
+    def not_favorite_goal(self, session: Session, goal_id: int) -> U | None:
+        """Remove goal from favorites
+
+        :param session: session
+        :param goal_id: goal id
+        """
+        goal = Goal.get_by_id(session, goal_id)
+        if goal:
+            if goal in self.goal_favorites:
+                self.goal_favorites.remove(goal)
+                session.add(self)
+                session.commit()
+                session.refresh(self)
+            return self
+
+        return None
 
     def like_story(self, session: Session, story_id: int) -> U | None:
         """Like story
@@ -224,6 +269,7 @@ class Goal(SQLModel, table=True):
     user: 'User' = Relationship(back_populates="goals")
     stories: List["Story"] = Relationship(back_populates="goal")
     deleted: bool = Field(default=False)
+    users_favorite: List["User"] = Relationship(back_populates="goal_favorites", link_model=UserGoalFavorite)
 
     @classmethod
     def get_by_id(cls: type[G], session: Session, _id: int) -> G | None:
